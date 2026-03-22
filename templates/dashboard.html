@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Личный кабинет - NS Body Scan</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); min-height: 100vh; padding: 20px; margin: 0; }
+        .container { max-width: 800px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        h1 { color: #ff66b5; margin: 0; }
+        .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
+        .card { background: #f8f9fa; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 4px solid #ff66b5; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; }
+        .flash { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .danger { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 NS Body Scan</h1>
+            <div class="menu">
+                <a href="/dashboard">Главная</a>
+                <a href="/profile">Профиль</a>
+                <a href="/analyze">Анализ</a>
+                <a href="/logout">Выйти</a>
+            </div>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        
+        <h2>Привет, {{ user.name or user.username }}!</h2>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>📊 Ваши данные</h3>
+                <p>🎯 Цель: 
+                    {% if user.goal == 'lose' %}Похудение
+                    {% elif user.goal == 'gain' %}Набор массы
+                    {% elif user.goal == 'posture' %}Коррекция осанки
+                    {% else %}Подтянутое тело{% endif %}
+                </p>
+                <p>📏 Рост: {{ user.height }} см</p>
+                <p>⚖️ Вес: {{ user.weight }} кг</p>
+                <p>🎂 Возраст: {{ user.age }} лет</p>
+                <p>⭐ Роль: {% if user.role == 'trainer' %}Тренер{% else %}Клиент{% endif %}</p>
+            </div>
+            <div class="card">
+                <h3>🤖 AI-помощник</h3>
+                <p>Загрузите 3 фото (спереди, сзади, сбоку)</p>
+                <p>ИИ проанализирует вашу осанку и даст рекомендации</p>
+                <a href="/analyze"><button>📸 Начать анализ</button></a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

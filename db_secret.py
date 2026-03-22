@@ -1,0 +1,1 @@
+DB_PASSWORD = "Konan1995!"

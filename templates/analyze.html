@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Анализ - NS Body Scan</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); min-height: 100vh; padding: 20px; margin: 0; }
+        .container { max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        h1 { color: #ff66b5; }
+        .upload-card { border: 2px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 10px; background: white; }
+        input { margin: 10px 0; }
+        button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-size: 16px; }
+        .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
+        .flash { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .danger { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <h1>🧠 NS Body Scan</h1>
+            <div class="menu">
+                <a href="/dashboard">Главная</a>
+                <a href="/profile">Профиль</a>
+                <a href="/analyze">Анализ</a>
+                <a href="/logout">Выйти</a>
+            </div>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        
+        <h2>📸 Загрузите 3 фотографии</h2>
+        <p>Сделайте фото в облегающей одежде: спереди, сзади, сбоку. Фото должны быть в полный рост.</p>
+        
+        <form method="post" enctype="multipart/form-data">
+            <div class="upload-card">
+                <h3>📸 Вид спереди</h3>
+                <input type="file" name="front" accept="image/*" required>
+            </div>
+            <div class="upload-card">
+                <h3>📸 Вид сзади</h3>
+                <input type="file" name="back" accept="image/*" required>
+            </div>
+            <div class="upload-card">
+                <h3>📸 Вид сбоку</h3>
+                <input type="file" name="side" accept="image/*" required>
+            </div>
+            <div style="text-align: center;">
+                <button type="submit">🔍 Начать анализ</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

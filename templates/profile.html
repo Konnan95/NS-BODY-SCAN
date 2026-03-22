@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Профиль - NS Body Scan</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); min-height: 100vh; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
+        h1 { color: #ff66b5; }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 12px; border-radius: 25px; cursor: pointer; width: 100%; }
+        .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
+        .flash { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .danger { background: #f8d7da; color: #721c24; }
+        hr { margin: 20px 0; border: none; border-top: 1px solid #ddd; }
+        .section-title { font-weight: bold; color: #ff66b5; margin-top: 20px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <h1>🧠 NS Body Scan</h1>
+            <div class="menu">
+                <a href="/dashboard">Главная</a>
+                <a href="/profile">Профиль</a>
+                <a href="/analyze">Анализ</a>
+                <a href="/logout">Выйти</a>
+            </div>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        
+        <h2>Редактировать профиль</h2>
+        <form method="post">
+            <label>Имя:</label>
+            <input type="text" name="name" value="{{ user.name or '' }}">
+            
+            <label>Возраст:</label>
+            <input type="number" name="age" value="{{ user.age or '' }}">
+            
+            <label>Рост (см):</label>
+            <input type="number" name="height" value="{{ user.height or '' }}">
+            
+            <label>Вес (кг):</label>
+            <input type="number" name="weight" value="{{ user.weight or '' }}">
+            
+            <label>Цель:</label>
+            <select name="goal">
+                <option value="lose" {% if user.goal == 'lose' %}selected{% endif %}>Похудение</option>
+                <option value="gain" {% if user.goal == 'gain' %}selected{% endif %}>Набор массы</option>
+                <option value="tone" {% if user.goal == 'tone' %}selected{% endif %}>Подтянутое тело</option>
+                <option value="posture" {% if user.goal == 'posture' %}selected{% endif %}>Коррекция осанки</option>
+            </select>
+            
+            <label>Активность:</label>
+            <select name="activity">
+                <option value="1.2" {% if user.activity == 1.2 %}selected{% endif %}>Минимальный</option>
+                <option value="1.375" {% if user.activity == 1.375 %}selected{% endif %}>Низкий</option>
+                <option value="1.55" {% if user.activity == 1.55 %}selected{% endif %}>Средний</option>
+                <option value="1.725" {% if user.activity == 1.725 %}selected{% endif %}>Высокий</option>
+            </select>
+            
+            <hr>
+            <div class="section-title">Телосложение и питание</div>
+            
+            <label>Тип телосложения:</label>
+            <select name="body_type">
+                <option value="ectomorph" {% if user.body_type == 'ectomorph' %}selected{% endif %}>Эктоморф (худощавый)</option>
+                <option value="mesomorph" {% if user.body_type == 'mesomorph' %}selected{% endif %}>Мезоморф (спортивный)</option>
+                <option value="endomorph" {% if user.body_type == 'endomorph' %}selected{% endif %}>Эндоморф (склонность к полноте)</option>
+            </select>
+            
+            <label>Количество приёмов пищи в день:</label>
+            <input type="number" name="meals_per_day" value="{{ user.meals_per_day or 4 }}" min="3" max="6">
+            
+            <label>Режим питания:</label>
+            <select name="eating_schedule">
+                <option value="3" {% if user.eating_schedule == '3' %}selected{% endif %}>3 раза (завтрак, обед, ужин)</option>
+                <option value="4" {% if user.eating_schedule == '4' %}selected{% endif %}>4 раза (+ перекус)</option>
+                <option value="5" {% if user.eating_schedule == '5' %}selected{% endif %}>5 раз (дробно)</option>
+            </select>
+            
+            <label>Бюджет на питание:</label>
+            <select name="food_budget">
+                <option value="economy" {% if user.food_budget == 'economy' %}selected{% endif %}>Эконом</option>
+                <option value="medium" {% if user.food_budget == 'medium' %}selected{% endif %}>Средний</option>
+                <option value="premium" {% if user.food_budget == 'premium' %}selected{% endif %}>Премиум</option>
+            </select>
+            
+            <label>Любимые продукты (через запятую):</label>
+            <input type="text" name="favorite_foods" value="{{ user.favorite_foods or '' }}" placeholder="курица, гречка, яблоки">
+            
+            <label>Нелюбимые продукты (через запятую):</label>
+            <input type="text" name="disliked_foods" value="{{ user.disliked_foods or '' }}" placeholder="свекла, печень">
+            
+            <label>Аллергии/непереносимости:</label>
+            <input type="text" name="allergies" value="{{ user.allergies or '' }}" placeholder="лактоза, глютен, орехи">
+            
+            <label>Предпочтения в еде:</label>
+            <input type="text" name="preferences" value="{{ user.preferences or '' }}" placeholder="люблю рыбу, не ем свинину">
+            
+            <hr>
+            <div class="section-title">Здоровье и образ жизни</div>
+            
+            <label>Оборудование:</label>
+            <select name="equipment">
+                <option value="body" {% if user.equipment == 'body' %}selected{% endif %}>Только коврик (свой вес)</option>
+                <option value="bands" {% if user.equipment == 'bands' %}selected{% endif %}>Резинки/эспандеры</option>
+                <option value="dumbbells" {% if user.equipment == 'dumbbells' %}selected{% endif %}>Гантели</option>
+                <option value="gym" {% if user.equipment == 'gym' %}selected{% endif %}>Полный зал</option>
+                <option value="outdoor" {% if user.equipment == 'outdoor' %}selected{% endif %}>Уличная площадка</option>
+            </select>
+            
+            <label>Травмы/ограничения:</label>
+            <input type="text" name="injuries" value="{{ user.injuries or '' }}" placeholder="колено, спина, плечо">
+            
+            <label>Хронические заболевания:</label>
+            <input type="text" name="chronic_diseases" value="{{ user.chronic_diseases or '' }}" placeholder="сколиоз, гипертония">
+            
+            <label>Проблемные зоны:</label>
+            <input type="text" name="problem_zones" value="{{ user.problem_zones or '' }}" placeholder="спина, шея, колени">
+            
+            <hr>
+            <div class="section-title">Режим дня</div>
+            
+            <label>Во сколько просыпаетесь?</label>
+            <input type="time" name="wake_time" value="{{ user.wake_time or '' }}">
+            
+            <label>Во сколько ложитесь?</label>
+            <input type="time" name="sleep_time" value="{{ user.sleep_time or '' }}">
+            
+            <button type="submit">Сохранить</button>
+        </form>
+    </div>
+</body>
+</html>

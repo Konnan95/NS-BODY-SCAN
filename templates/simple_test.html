@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Тест</title>
+</head>
+<body>
+    <h1>Тест страницы</h1>
+    <div id="result">Загрузка...</div>
+    
+    <script>
+        fetch('/api/exercises?limit=1')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerHTML = 
+                    '<p>✅ Упражнений всего: ' + data.total + '</p>' +
+                    '<p>✅ Первое упражнение: ' + data.exercises[0].name + '</p>' +
+                    '<p>✅ GIF URL: ' + data.exercises[0].gifUrl + '</p>';
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = '❌ Ошибка: ' + error;
+            });
+    </script>
+</body>
+</html>

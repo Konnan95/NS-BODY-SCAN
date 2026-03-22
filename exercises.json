@@ -1,0 +1,42 @@
+{
+    "squat": {
+        "name": "Приседания",
+        "video": "https://www.youtube.com/embed/U3HlEFp9Uc8",
+        "instructions": "Ноги на ширине плеч, спина прямая, приседаем до параллели"
+    },
+    "pushup": {
+        "name": "Отжимания от пола",
+        "video": "https://www.youtube.com/embed/_l3ySVKYVJ8",
+        "instructions": "Руки на ширине плеч, тело прямое, опускаемся грудью к полу"
+    },
+    "plank": {
+        "name": "Планка",
+        "video": "https://www.youtube.com/embed/pSHjTRCQxIw",
+        "instructions": "Предплечья на полу, тело прямое, держим 30-60 сек"
+    },
+    "lunge": {
+        "name": "Выпады",
+        "video": "https://www.youtube.com/embed/QOVaHwm-Q6w",
+        "instructions": "Шаг вперед, колено не выходит за носок, спина прямая"
+    },
+    "glute_bridge": {
+        "name": "Ягодичный мостик",
+        "video": "https://www.youtube.com/embed/8XvjI1nCz1w",
+        "instructions": "Лежа на спине, ноги согнуты, поднимаем таз вверх"
+    },
+    "face_pull": {
+        "name": "Тяга к лицу (Face Pull)",
+        "video": "https://www.youtube.com/embed/H-ZVKfA8kIk",
+        "instructions": "Тянем трос/резинку к лицу, локти в стороны"
+    },
+    "side_plank": {
+        "name": "Планка на боку",
+        "video": "https://www.youtube.com/embed/K2VljzCC16g",
+        "instructions": "Лежа на боку, опора на предплечье, тело прямое"
+    },
+    "neck_stretch": {
+        "name": "Растяжка шеи",
+        "video": "https://www.youtube.com/embed/4BJnQ5wPZ2s",
+        "instructions": "Наклоняем голову в стороны, задерживаем по 20 сек"
+    }
+}

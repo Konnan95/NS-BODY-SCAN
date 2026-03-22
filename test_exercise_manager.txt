@@ -1,0 +1,53 @@
+from exercise_manager import exercise_manager
+
+# Получаем статистику
+stats = exercise_manager.get_statistics()
+print("=" * 60)
+print("📊 СТАТИСТИКА ПО УПРАЖНЕНИЯМ")
+print("=" * 60)
+print(f"Всего упражнений в базе: {stats['total_exercises']}")
+print(f"Упражнений с GIF: {stats['exercises_with_media']}")
+print(f"GIF-файлов в папке: {stats['media_folder_size']}")
+print(f"Уникальных мышц: {stats['unique_muscles']}")
+print(f"Уникальных частей тела: {stats['unique_body_parts']}")
+print(f"Уникального инвентаря: {stats['unique_equipment']}")
+
+print("\n🎯 ЦЕЛЕВЫЕ МЫШЦЫ (первые 10):")
+for muscle in stats['muscles_list'][:10]:
+    print(f"  - {muscle}")
+
+print("\n💪 ЧАСТИ ТЕЛА:")
+for part in stats['body_parts_list']:
+    print(f"  - {part}")
+
+print("\n🛠️ ИНВЕНТАРЬ:")
+for eq in stats['equipment_list'][:15]:
+    print(f"  - {eq}")
+
+# Примеры фильтрации
+print("\n" + "=" * 60)
+print("🔍 ПРИМЕРЫ ФИЛЬТРАЦИИ")
+print("=" * 60)
+
+# Упражнения для бицепса
+biceps_exercises = exercise_manager.filter_by_muscles(['biceps'])
+print(f"\n💪 Упражнения для бицепса: {len(biceps_exercises)}")
+for ex in biceps_exercises[:5]:
+    print(f"  - {ex['name']}")
+
+# Упражнения с гантелями
+dumbbell_exercises = exercise_manager.filter_by_equipment(['dumbbell'])
+print(f"\n🏋️ Упражнения с гантелями: {len(dumbbell_exercises)}")
+for ex in dumbbell_exercises[:5]:
+    print(f"  - {ex['name']}")
+
+# Поиск по названию
+search_results = exercise_manager.search("push up")
+print(f"\n🔎 Поиск 'push up': {len(search_results)} упражнений")
+for ex in search_results[:5]:
+    print(f"  - {ex['name']}")
+
+# Генерируем упрощённый JSON
+print("\n📁 Генерация упрощённого JSON...")
+output_file = exercise_manager.generate_media_json()
+print(f"✅ Создан файл: {output_file}")

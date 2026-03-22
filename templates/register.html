@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Регистрация - NS Body Scan</title>
+    <style>
+        body { font-family: Arial; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); min-height: 100vh; padding: 20px; }
+        .container { max-width: 500px; margin: 50px auto; background: white; padding: 30px; border-radius: 20px; }
+        h1, h2 { text-align: center; color: #ff66b5; }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        button { width: 100%; background: #ff66b5; color: white; border: none; padding: 12px; border-radius: 25px; cursor: pointer; }
+        .flash { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .danger { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 NS Body Scan</h1>
+        <h2>Регистрация</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        <form method="post">
+            <input type="text" name="name" placeholder="Ваше имя" required>
+            <input type="text" name="username" placeholder="Логин (только латиница)" pattern="[a-zA-Z0-9_]+" title="Только латинские буквы, цифры и знак _" required>
+            <input type="password" name="password" placeholder="Пароль" required>
+            <input type="number" name="age" placeholder="Возраст" required>
+            <input type="number" name="height" placeholder="Рост (см)" required>
+            <input type="number" name="weight" placeholder="Вес (кг)" required>
+            <select name="goal" required>
+                <option value="lose">Похудение</option>
+                <option value="gain">Набор массы</option>
+                <option value="tone">Подтянутое тело</option>
+                <option value="posture">Коррекция осанки</option>
+            </select>
+            <select name="activity" required>
+                <option value="1.2">Минимальный</option>
+                <option value="1.375">Низкий</option>
+                <option value="1.55">Средний</option>
+                <option value="1.725">Высокий</option>
+            </select>
+            <select name="role">
+                <option value="user">Я клиент</option>
+                <option value="trainer">Я тренер</option>
+            </select>
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+        <p>Уже есть аккаунт? <a href="/login">Войти</a></p>
+    </div>
+</body>
+</html>

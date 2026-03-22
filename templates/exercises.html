@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Библиотека упражнений - NSBodyScan</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        .stats { color: #666; font-size: 14px; }
+        .filters {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .filter-group { margin-bottom: 15px; }
+        .filter-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .search-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .search-row input { flex: 1; }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: translateY(-2px); }
+        .exercises-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .exercise-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .exercise-card:hover { transform: translateY(-5px); }
+        .exercise-gif {
+            width: 100%;
+            height: 200px;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .exercise-gif img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .exercise-info { padding: 15px; }
+        .exercise-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .exercise-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .tag {
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            color: #666;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 18px;
+        }
+        .error {
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏋️ Библиотека упражнений</h1>
+            <div class="stats" id="stats">Загрузка статистики...</div>
+        </div>
+        
+        <div class="filters">
+            <div class="search-row">
+                <input type="text" id="searchInput" placeholder="Поиск упражнений...">
+                <button onclick="searchExercises()">🔍 Найти</button>
+                <button onclick="resetFilters()">🔄 Сбросить</button>
+            </div>
+            
+            <div class="filter-group">
+                <label>🎯 Целевая мышца:</label>
+                <select id="muscleFilter">
+                    <option value="">Все мышцы</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>🛠️ Инвентарь:</label>
+                <select id="equipmentFilter">
+                    <option value="">Весь инвентарь</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>💪 Часть тела:</label>
+                <select id="bodyPartFilter">
+                    <option value="">Все части</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="exercisesContainer" class="exercises-grid">
+            <div class="loading">Загрузка упражнений...</div>
+        </div>
+    </div>
+    
+    <script>
+        let allExercises = [];
+        let totalExercises = 0;
+        
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/exercises/stats');
+                const stats = await response.json();
+                totalExercises = stats.exercises_with_media;
+                document.getElementById('stats').innerHTML = 
+                    `📊 Всего упражнений: ${stats.exercises_with_media} | 🎯 Мышц: ${stats.unique_muscles} | 🛠️ Инвентаря: ${stats.unique_equipment}`;
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+        
+        async function loadFilters() {
+            try {
+                const musclesRes = await fetch('/api/exercises/muscles');
+                const musclesData = await musclesRes.json();
+                const muscleSelect = document.getElementById('muscleFilter');
+                musclesData.muscles.forEach(muscle => {
+                    const option = document.createElement('option');
+                    option.value = muscle;
+                    option.textContent = muscle;
+                    muscleSelect.appendChild(option);
+                });
+                
+                const equipmentRes = await fetch('/api/exercises/equipment');
+                const equipmentData = await equipmentRes.json();
+                const equipmentSelect = document.getElementById('equipmentFilter');
+                equipmentData.equipment.forEach(eq => {
+                    const option = document.createElement('option');
+                    option.value = eq;
+                    option.textContent = eq;
+                    equipmentSelect.appendChild(option);
+                });
+                
+                const bodyPartsRes = await fetch('/api/exercises/body-parts');
+                const bodyPartsData = await bodyPartsRes.json();
+                const bodyPartSelect = document.getElementById('bodyPartFilter');
+                bodyPartsData.bodyParts.forEach(part => {
+                    const option = document.createElement('option');
+                    option.value = part;
+                    option.textContent = part;
+                    bodyPartSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+        
+        async function loadExercises() {
+            try {
+                const response = await fetch('/api/exercises');
+                const data = await response.json();
+                if (data.exercises && data.exercises.length > 0) {
+                    allExercises = data.exercises;
+                    totalExercises = data.total;
+                    displayExercises(allExercises);
+                } else {
+                    document.getElementById('exercisesContainer').innerHTML = '<div class="error">Нет данных</div>';
+                }
+            } catch (error) {
+                document.getElementById('exercisesContainer').innerHTML = '<div class="error">Ошибка загрузки</div>';
+            }
+        }
+        
+        async function searchExercises() {
+            const searchQuery = document.getElementById('searchInput').value;
+            const muscle = document.getElementById('muscleFilter').value;
+            const equipment = document.getElementById('equipmentFilter').value;
+            const bodyPart = document.getElementById('bodyPartFilter').value;
+            
+            if (!searchQuery && !muscle && !equipment && !bodyPart) {
+                displayExercises(allExercises);
+                return;
+            }
+            
+            const filters = {
+                search: searchQuery,
+                muscles: muscle ? [muscle] : [],
+                equipment: equipment ? [equipment] : [],
+                bodyParts: bodyPart ? [bodyPart] : []
+            };
+            
+            try {
+                const response = await fetch('/api/exercises/filter', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(filters)
+                });
+                const data = await response.json();
+                displayExercises(data.exercises);
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+        
+        function displayExercises(exercises) {
+            const container = document.getElementById('exercisesContainer');
+            
+            if (!exercises || exercises.length === 0) {
+                container.innerHTML = '<div class="loading">😔 Упражнения не найдены</div>';
+                return;
+            }
+            
+            const statsDiv = document.getElementById('stats');
+            if (exercises.length !== totalExercises) {
+                statsDiv.innerHTML = `📊 Найдено: ${exercises.length} из ${totalExercises} упражнений`;
+            }
+            
+            container.innerHTML = exercises.map(ex => {
+                let gifFileName = ex.gifUrl.split('/').pop();
+                const gifPath = `/static/media/${gifFileName}`;
+                
+                return `
+                    <div class="exercise-card">
+                        <div class="exercise-gif">
+                            <img src="${gifPath}" alt="${ex.name}" loading="lazy" onerror="this.style.display='none'">
+                        </div>
+                        <div class="exercise-info">
+                            <div class="exercise-name">${ex.name}</div>
+                            <div class="exercise-tags">
+                                ${ex.targetMuscles ? ex.targetMuscles.map(m => `<span class="tag">🎯 ${m}</span>`).join('') : ''}
+                                ${ex.equipments ? ex.equipments.map(e => `<span class="tag">🛠️ ${e}</span>`).join('') : ''}
+                                ${ex.bodyParts ? ex.bodyParts.map(p => `<span class="tag">💪 ${p}</span>`).join('') : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('muscleFilter').value = '';
+            document.getElementById('equipmentFilter').value = '';
+            document.getElementById('bodyPartFilter').value = '';
+            displayExercises(allExercises);
+            loadStats();
+        }
+        
+        loadStats();
+        loadFilters();
+        loadExercises();
+    </script>
+</body>
+</html>

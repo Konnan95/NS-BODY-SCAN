@@ -1,0 +1,12 @@
+﻿venv_own/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.dll
+*.so
+*.bin
+.env
+*.db
+*.sqlite
+.DS_Store

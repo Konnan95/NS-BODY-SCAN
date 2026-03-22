@@ -1,0 +1,219 @@
+import os
+import json
+from typing import List, Dict, Optional
+from functools import lru_cache
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class ExerciseManager:
+    """Менеджер для работы с базой упражнений и GIF-файлами"""
+    
+    def __init__(self, 
+                 exercises_path: str = None,
+                 media_folder: str = None):
+        """
+        Инициализация менеджера упражнений
+        
+        Args:
+            exercises_path: путь к exercises.json
+            media_folder: путь к папке с GIF-файлами
+        """
+        self.project_root = r"C:\Users\zahov\Desktop\NSBodyScan_Own"
+        
+        if exercises_path is None:
+            exercises_path = os.path.join(self.project_root, "data", "exercises.json")
+        
+        if media_folder is None:
+            media_folder = os.path.join(self.project_root, "static", "media")
+        
+        self.exercises_path = exercises_path
+        self.media_folder = media_folder
+        
+        # Загружаем данные
+        self._exercises = None
+        self._gif_files = None
+        self._exercise_by_id = None
+        self._indices = {}
+        
+        self._load_data()
+        self._build_indices()
+    
+    def _load_data(self):
+        """Загружает данные из JSON и сканирует папку с GIF"""
+        try:
+            with open(self.exercises_path, 'r', encoding='utf-8') as f:
+                self._exercises = json.load(f)
+            logger.info(f"Загружено {len(self._exercises)} упражнений")
+        except FileNotFoundError:
+            logger.error(f"Файл не найден: {self.exercises_path}")
+            self._exercises = []
+        
+        try:
+            self._gif_files = set(os.listdir(self.media_folder))
+            logger.info(f"Найдено {len(self._gif_files)} GIF-файлов")
+        except FileNotFoundError:
+            logger.error(f"Папка не найдена: {self.media_folder}")
+            self._gif_files = set()
+    
+    def _build_indices(self):
+        """Строит индексы для быстрого поиска"""
+        self._exercise_by_id = {}
+        self._indices = {
+            'targetMuscles': {},
+            'bodyParts': {},
+            'equipments': {}
+        }
+        
+        for ex in self._exercises:
+            # Индекс по ID
+            ex_id = ex['exerciseId']
+            self._exercise_by_id[ex_id] = ex
+            
+            # Индекс по целевым мышцам
+            for muscle in ex.get('targetMuscles', []):
+                if muscle not in self._indices['targetMuscles']:
+                    self._indices['targetMuscles'][muscle] = []
+                self._indices['targetMuscles'][muscle].append(ex)
+            
+            # Индекс по частям тела
+            for body_part in ex.get('bodyParts', []):
+                if body_part not in self._indices['bodyParts']:
+                    self._indices['bodyParts'][body_part] = []
+                self._indices['bodyParts'][body_part].append(ex)
+            
+            # Индекс по инвентарю
+            for equipment in ex.get('equipments', []):
+                if equipment not in self._indices['equipments']:
+                    self._indices['equipments'][equipment] = []
+                self._indices['equipments'][equipment].append(ex)
+    
+    @property
+    def exercises(self):
+        """Возвращает все упражнения (с фильтром только тех, у которых есть GIF)"""
+        return [ex for ex in self._exercises if self.has_gif(ex)]
+    
+    @lru_cache(maxsize=1)
+    def get_all_with_media(self) -> List[Dict]:
+        """Возвращает все упражнения, у которых есть GIF"""
+        return [ex for ex in self._exercises if self.has_gif(ex)]
+    
+    def has_gif(self, exercise: Dict) -> bool:
+        """Проверяет, есть ли GIF для упражнения"""
+        gif_name = exercise['gifUrl'].split('/')[-1]
+        return gif_name in self._gif_files
+    
+    def get_gif_path(self, exercise: Dict) -> Optional[str]:
+        """Возвращает локальный путь к GIF-файлу"""
+        if not self.has_gif(exercise):
+            return None
+        gif_name = exercise['gifUrl'].split('/')[-1]
+        return os.path.join(self.media_folder, gif_name)
+    
+    def get_by_id(self, exercise_id: str) -> Optional[Dict]:
+        """Получает упражнение по ID"""
+        ex = self._exercise_by_id.get(exercise_id)
+        if ex and self.has_gif(ex):
+            return ex
+        return None
+    
+    def filter_by_muscles(self, muscles: List[str]) -> List[Dict]:
+        """Фильтрует упражнения по целевым мышцам"""
+        result = []
+        seen_ids = set()
+        for muscle in muscles:
+            if muscle in self._indices['targetMuscles']:
+                for ex in self._indices['targetMuscles'][muscle]:
+                    if self.has_gif(ex) and ex['exerciseId'] not in seen_ids:
+                        seen_ids.add(ex['exerciseId'])
+                        result.append(ex)
+        return result
+    
+    def filter_by_body_parts(self, body_parts: List[str]) -> List[Dict]:
+        """Фильтрует упражнения по частям тела"""
+        result = []
+        seen_ids = set()
+        for part in body_parts:
+            if part in self._indices['bodyParts']:
+                for ex in self._indices['bodyParts'][part]:
+                    if self.has_gif(ex) and ex['exerciseId'] not in seen_ids:
+                        seen_ids.add(ex['exerciseId'])
+                        result.append(ex)
+        return result
+    
+    def filter_by_equipment(self, equipment_list: List[str]) -> List[Dict]:
+        """Фильтрует упражнения по инвентарю"""
+        result = []
+        seen_ids = set()
+        for eq in equipment_list:
+            if eq in self._indices['equipments']:
+                for ex in self._indices['equipments'][eq]:
+                    if self.has_gif(ex) and ex['exerciseId'] not in seen_ids:
+                        seen_ids.add(ex['exerciseId'])
+                        result.append(ex)
+        return result
+    
+    def search(self, query: str) -> List[Dict]:
+        """Поиск упражнений по названию"""
+        query_lower = query.lower()
+        results = []
+        for ex in self._exercises:
+            if self.has_gif(ex) and query_lower in ex['name'].lower():
+                results.append(ex)
+        return results
+    
+    def get_statistics(self) -> Dict:
+        """Возвращает статистику по упражнениям"""
+        exercises_with_media = self.get_all_with_media()
+        
+        unique_muscles = set()
+        unique_body_parts = set()
+        unique_equipment = set()
+        
+        for ex in exercises_with_media:
+            unique_muscles.update(ex.get('targetMuscles', []))
+            unique_body_parts.update(ex.get('bodyParts', []))
+            unique_equipment.update(ex.get('equipments', []))
+        
+        return {
+            'total_exercises': len(self._exercises),
+            'exercises_with_media': len(exercises_with_media),
+            'media_folder_size': len(self._gif_files),
+            'unique_muscles': len(unique_muscles),
+            'unique_body_parts': len(unique_body_parts),
+            'unique_equipment': len(unique_equipment),
+            'muscles_list': sorted(unique_muscles),
+            'body_parts_list': sorted(unique_body_parts),
+            'equipment_list': sorted(unique_equipment)
+        }
+    
+    def generate_media_json(self, output_path: str = None):
+        """Генерирует упрощённый JSON только с упражнениями, у которых есть GIF"""
+        if output_path is None:
+            output_path = os.path.join(self.project_root, "data", "exercises_with_media.json")
+        
+        simplified = []
+        for ex in self.get_all_with_media():
+            simplified.append({
+                'exerciseId': ex['exerciseId'],
+                'name': ex['name'],
+                'gifFile': ex['gifUrl'].split('/')[-1],
+                'targetMuscles': ex.get('targetMuscles', []),
+                'bodyParts': ex.get('bodyParts', []),
+                'equipments': ex.get('equipments', [])
+            })
+        
+        # Создаём папку data если её нет
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(simplified, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"Создан упрощённый JSON: {output_path} ({len(simplified)} упражнений)")
+        return output_path
+
+
+# Создаём глобальный экземпляр для использования во всём проекте
+exercise_manager = ExerciseManager()

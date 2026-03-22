@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Результат - NS Body Scan</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
+        h1, h2 { color: #ff66b5; }
+        .card { background: #f8f9fa; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 4px solid #ff66b5; }
+        .score { font-size: 24px; font-weight: bold; color: #ff66b5; }
+        button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; }
+        .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
+        pre { white-space: pre-wrap; font-family: inherit; background: white; padding: 15px; border-radius: 10px; margin-top: 10px; }
+        .exercise-item { 
+            background: white; 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            border-radius: 15px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .exercise-item h4 { 
+            color: #ff66b5; 
+            margin-top: 0; 
+            margin-bottom: 10px;
+        }
+        .exercise-media { 
+            margin: 10px 0;
+            text-align: center;
+        }
+        .exercise-media img, .exercise-media video {
+            max-width: 100%;
+            border-radius: 10px;
+            max-height: 200px;
+        }
+        .exercise-details {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+        }
+        .badge {
+            display: inline-block;
+            background: #ff66b5;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <h1>🧠 NS Body Scan</h1>
+            <div class="menu">
+                <a href="/dashboard">Главная</a>
+                <a href="/profile">Профиль</a>
+                <a href="/analyze">Анализ</a>
+                <a href="/history">История</a>
+                <a href="/logout">Выйти</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>📊 Результаты анализа</h2>
+            <p>📐 <strong>Наклон плеч:</strong> {{ shoulder }}°</p>
+            <p>📐 <strong>Наклон таза:</strong> {{ hip }}°</p>
+            <p>📐 <strong>Наклон головы:</strong> {{ head }}°</p>
+            <p>⭐ <span class="score">Оценка осанки: {{ score }}/10</span></p>
+        </div>
+        
+        <div class="card">
+            <h3>🧬 Анализ состава тела</h3>
+            <p>🔥 <strong>% жира:</strong> {{ body_fat }}% (норма 18-28%)</p>
+            <p>💪 <strong>Мышечная масса:</strong> {{ muscle_mass }} кг</p>
+            <p>💧 <strong>Вода:</strong> {{ water }} кг</p>
+            <p>⚠️ <strong>Висцеральный жир:</strong> {{ visceral_fat }} (уровень)</p>
+        </div>
+        
+        <div class="card">
+            <h3>🏋️ AI-план тренировок</h3>
+            <pre>{{ workout_plan_text }}</pre>
+        </div>
+        
+        {% if exercises_with_media %}
+        <div class="card">
+            <h3>🎬 Видео-демонстрации упражнений</h3>
+            {% for ex in exercises_with_media %}
+            <div class="exercise-item">
+                <h4>{{ ex.name | capitalize }}</h4>
+                {% if ex.media and ex.media.type == 'gif' %}
+                <div class="exercise-media">
+                    <img src="{{ ex.media.url }}" alt="{{ ex.name }}" loading="lazy">
+                </div>
+                {% elif ex.media and ex.media.type == 'youtube' %}
+                <div class="exercise-media">
+                    <iframe width="100%" height="200" src="{{ ex.media.url }}" frameborder="0" allowfullscreen></iframe>
+                </div>
+                {% else %}
+                <div class="exercise-media">
+                    <p style="color: #999;">🎥 Видео-демонстрация временно недоступна</p>
+                </div>
+                {% endif %}
+                {% if ex.instructions %}
+                <div class="exercise-details">
+                    <details>
+                        <summary>📖 Инструкция</summary>
+                        <ul style="margin-top: 8px; padding-left: 20px;">
+                            {% for instr in ex.instructions %}
+                            <li>{{ instr }}</li>
+                            {% endfor %}
+                        </ul>
+                    </details>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <h3>🥗 AI-план питания (на день)</h3>
+            <pre>{{ meal_plan }}</pre>
+        </div>
+        
+        <div class="card">
+            <h3>🥗 Рекомендации по питанию</h3>
+            <p>🔥 Калории: {{ calories }} ккал/день</p>
+            <p>🥩 Белки: {{ protein }} г</p>
+            <p>🧈 Жиры: {{ fat }} г</p>
+            <p>🍚 Углеводы: {{ carbs }} г</p>
+        </div>
+        
+        <div class="button-group">
+            <a href="/static/files/zavtraki.pdf" download>
+                <button>📚 Скачать сборник завтраков</button>
+            </a>
+            {% if pdf_url %}
+            <a href="{{ pdf_url }}" download>
+                <button>📄 Скачать PDF-отчёт</button>
+            </a>
+            {% endif %}
+            <a href="/analyze">
+                <button>📸 Пройти анализ снова</button>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
