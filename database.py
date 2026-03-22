@@ -113,16 +113,71 @@ def save_body_composition(user_id, body_fat, muscle_mass, water, visceral_fat):
     conn.commit()
     conn.close()
 
-def save_daily_health(user_id, steps, sleep_hours, weight):
-    """Сохранить данные о шагах и сне"""
+def save_daily_health(user_id, steps, sleep_hours, weight=None):
+    """Сохранить данные о шагах и сне с обработкой конфликтов"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # Используем ON CONFLICT для обновления существующей записи за сегодня
+        cur.execute("""
+            INSERT INTO daily_health (user_id, steps, sleep_hours, weight, date)
+            VALUES (%s, %s, %s, %s, CURRENT_DATE)
+            ON CONFLICT (user_id, date) 
+            DO UPDATE SET 
+                steps = EXCLUDED.steps,
+                sleep_hours = EXCLUDED.sleep_hours,
+                weight = EXCLUDED.weight
+        """, (user_id, steps, sleep_hours, weight))
+        conn.commit()
+    except Exception as e:
+        print(f"Error saving daily health: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
+
+def get_daily_health(user_id, days=7):
+    """Получить историю шагов и сна за последние N дней"""
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO daily_health (user_id, steps, sleep_hours, weight)
-        VALUES (%s, %s, %s, %s)
-    """, (user_id, steps, sleep_hours, weight))
-    conn.commit()
+        SELECT date, steps, sleep_hours, weight
+        FROM daily_health
+        WHERE user_id = %s
+        ORDER BY date DESC
+        LIMIT %s
+    """, (user_id, days))
+    rows = cur.fetchall()
     conn.close()
+    
+    result = []
+    for row in rows:
+        result.append({
+            'date': row[0].strftime('%d.%m.%Y'),
+            'steps': row[1],
+            'sleep_hours': float(row[2]) if row[2] else 0,
+            'weight': float(row[3]) if row[3] else None
+        })
+    return result
+
+def get_today_health(user_id):
+    """Получить данные за сегодня"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT steps, sleep_hours, weight
+        FROM daily_health
+        WHERE user_id = %s AND date = CURRENT_DATE
+    """, (user_id,))
+    row = cur.fetchone()
+    conn.close()
+    
+    if row:
+        return {
+            'steps': row[0],
+            'sleep_hours': float(row[1]) if row[1] else 0,
+            'weight': float(row[2]) if row[2] else None
+        }
+    return None
 
 def get_user_history(user_id):
     """Получить историю анализов пользователя"""

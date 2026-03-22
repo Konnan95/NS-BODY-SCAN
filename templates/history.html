@@ -3,13 +3,16 @@
 <head>
     <title>История - NS Body Scan</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); min-height: 100vh; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
-        h1, h2 { color: #ff66b5; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); min-height: 100vh; padding: 20px; margin: 0; }
+        .container { max-width: 900px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
+        h1, h2, h3 { color: #ff66b5; }
         .card { background: #f8f9fa; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 4px solid #ff66b5; }
-        .date { color: #ff66b5; font-weight: bold; margin-bottom: 10px; }
+        .date { color: #ff66b5; font-weight: bold; margin-bottom: 10px; font-size: 14px; }
         .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
         .score { font-size: 18px; font-weight: bold; color: #ff66b5; }
+        .metric { margin: 8px 0; }
+        .bad { color: #dc3545; }
+        .good { color: #28a745; }
     </style>
 </head>
 <body>
@@ -31,30 +34,46 @@
         {% if posture %}
             {% for a in posture %}
             <div class="card">
-                <div class="date">{{ a[7] }}</div>
-                <p>📐 Наклон плеч: <strong>{{ a[2] }}°</strong></p>
-                <p>📐 Наклон таза: <strong>{{ a[3] }}°</strong></p>
-                <p>📐 Наклон головы: <strong>{{ a[4] }}°</strong></p>
-                <p>⭐ Оценка осанки: <span class="score">{{ a[5] }}/10</span></p>
+                <div class="date">📅 {{ a.created_at }}</div>
+                <div class="metric">📐 Наклон плеч: <strong>{{ "%.1f"|format(a.shoulder_slope) }}°</strong></div>
+                <div class="metric">📐 Наклон таза: <strong>{{ "%.1f"|format(a.hip_slope) }}°</strong></div>
+                <div class="metric">📐 Наклон головы: <strong>{{ "%.1f"|format(a.head_tilt) }}°</strong></div>
+                <div class="metric">⭐ Оценка осанки: <span class="score">{{ "%.1f"|format(a.posture_score) }}/10</span></div>
             </div>
             {% endfor %}
         {% else %}
-            <p>Нет сохранённых анализов осанки</p>
+            <p>📭 Нет сохранённых анализов осанки</p>
         {% endif %}
         
         <h3>🧬 Анализы состава тела</h3>
         {% if composition %}
             {% for a in composition %}
             <div class="card">
-                <div class="date">{{ a[6] }}</div>
-                <p>🔥 % жира: <strong>{{ a[2] }}%</strong> (норма 18-28%)</p>
-                <p>💪 Мышечная масса: <strong>{{ a[3] }} кг</strong></p>
-                <p>💧 Вода: <strong>{{ a[4] }} кг</strong></p>
-                <p>⚠️ Висцеральный жир: <strong>{{ a[5] }}</strong></p>
+                <div class="date">📅 {{ a.created_at }}</div>
+                <div class="metric">🔥 % жира: <strong>{{ "%.1f"|format(a.body_fat) }}%</strong> 
+                    {% if a.body_fat < 18 %}
+                        <span class="good">⬇️ ниже нормы</span>
+                    {% elif a.body_fat > 28 %}
+                        <span class="bad">⬆️ выше нормы</span>
+                    {% else %}
+                        <span class="good">✅ норма</span>
+                    {% endif %}
+                </div>
+                <div class="metric">💪 Мышечная масса: <strong>{{ "%.1f"|format(a.muscle_mass) }} кг</strong></div>
+                <div class="metric">💧 Вода: <strong>{{ "%.1f"|format(a.water) }}%</strong></div>
+                <div class="metric">⚠️ Висцеральный жир: <strong>{{ a.visceral_fat }}</strong>
+                    {% if a.visceral_fat > 10 %}
+                        <span class="bad">⚠️ высокий риск</span>
+                    {% elif a.visceral_fat > 5 %}
+                        <span>⚠️ средний риск</span>
+                    {% else %}
+                        <span class="good">✅ норма</span>
+                    {% endif %}
+                </div>
             </div>
             {% endfor %}
         {% else %}
-            <p>Нет сохранённых анализов состава тела</p>
+            <p>📭 Нет сохранённых анализов состава тела</p>
         {% endif %}
     </div>
 </body>

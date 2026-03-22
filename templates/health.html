@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Шаги и сон - NS Body Scan</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); min-height: 100vh; padding: 20px; margin: 0; }
+        .container { max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
+        h1, h2 { color: #ff66b5; }
+        .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-size: 16px; }
+        .flash { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .danger { background: #f8d7da; color: #721c24; }
+        .info-card { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .recommendation { font-size: 14px; color: #666; margin-top: 5px; }
+        .norm { color: #28a745; }
+        .warning { color: #ffc107; }
+        .bad { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <h1>🧠 NS Body Scan</h1>
+            <div class="menu">
+                <a href="/dashboard">Главная</a>
+                <a href="/profile">Профиль</a>
+                <a href="/analyze">Анализ</a>
+                <a href="/history">История</a>
+                <a href="/health">Шаги/Сон</a>
+                <a href="/logout">Выйти</a>
+            </div>
+        </div>
+        
+        <h2>🏃‍♀️ Ежедневный трекинг</h2>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        
+        {% if today %}
+        <div class="info-card">
+            <h3>📊 Сегодняшние данные:</h3>
+            <p>👣 Шаги: <strong>{{ today.steps }}</strong> 
+                {% if today.steps < 8000 %}
+                    <span class="warning">(меньше нормы 8000)</span>
+                {% elif today.steps > 10000 %}
+                    <span class="norm">(отлично!)</span>
+                {% else %}
+                    <span class="norm">(хорошо)</span>
+                {% endif %}
+            </p>
+            <p>😴 Сон: <strong>{{ today.sleep_hours }} ч</strong>
+                {% if today.sleep_hours < 7 %}
+                    <span class="warning">(меньше нормы 7-9 ч)</span>
+                {% elif today.sleep_hours > 9 %}
+                    <span class="warning">(больше нормы)</span>
+                {% else %}
+                    <span class="norm">(норма)</span>
+                {% endif %}
+            </p>
+            {% if today.weight %}
+            <p>⚖️ Вес: <strong>{{ today.weight }} кг</strong></p>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <form method="POST" action="/save_health">
+            <div class="form-group">
+                <label>👣 Количество шагов</label>
+                <input type="number" name="steps" value="{{ today.steps if today else '' }}" placeholder="Например: 8000" min="0">
+                <div class="recommendation">Рекомендация: 8000-10000 шагов в день</div>
+            </div>
+            
+            <div class="form-group">
+                <label>😴 Часы сна</label>
+                <input type="number" step="0.5" name="sleep_hours" value="{{ today.sleep_hours if today else '' }}" placeholder="Например: 7.5" min="0" max="24">
+                <div class="recommendation">Рекомендация: 7-9 часов сна</div>
+            </div>
+            
+            <div class="form-group">
+                <label>⚖️ Вес (опционально)</label>
+                <input type="number" step="0.1" name="weight" value="{{ today.weight if today else '' }}" placeholder="кг">
+            </div>
+            
+            <button type="submit">💾 Сохранить</button>
+        </form>
+        
+        <div style="margin-top: 30px; padding: 15px; background: #e9ecef; border-radius: 10px;">
+            <h3>📈 Почему это важно?</h3>
+            <ul>
+                <li>👣 <strong>Шаги</strong> — влияют на расход калорий и здоровье сердца</li>
+                <li>😴 <strong>Сон</strong> — восстанавливает мышцы и регулирует гормоны</li>
+                <li>⚖️ <strong>Вес</strong> — ключевой показатель прогресса</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

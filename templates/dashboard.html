@@ -4,16 +4,23 @@
     <title>Личный кабинет - NS Body Scan</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); min-height: 100vh; padding: 20px; margin: 0; }
-        .container { max-width: 800px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .container { max-width: 1200px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         h1 { color: #ff66b5; margin: 0; }
+        h2, h3 { color: #ff66b5; }
         .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
-        .card { background: #f8f9fa; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 4px solid #ff66b5; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: #f8f9fa; padding: 20px; border-radius: 15px; border-left: 4px solid #ff66b5; }
+        .card h3 { margin-top: 0; color: #ff66b5; }
+        .metric { font-size: 24px; font-weight: bold; color: #333; margin: 10px 0; }
+        .unit { font-size: 14px; color: #666; }
+        .recommendation { background: #e9ecef; padding: 15px; border-radius: 10px; margin-top: 15px; }
         .flash { padding: 10px; margin: 10px 0; border-radius: 5px; }
         .success { background: #d4edda; color: #155724; }
         .danger { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; text-decoration: none; display: inline-block; margin-top: 10px; }
+        .button:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
@@ -24,6 +31,8 @@
                 <a href="/dashboard">Главная</a>
                 <a href="/profile">Профиль</a>
                 <a href="/analyze">Анализ</a>
+                <a href="/history">История</a>
+                <a href="/health">Шаги/Сон</a>
                 <a href="/logout">Выйти</a>
             </div>
         </div>
@@ -34,7 +43,82 @@
             {% endfor %}
         {% endwith %}
         
-        <h2>Привет, {{ user.name or user.username }}!</h2>
+        <h2>Привет, {{ user.name or user.username }}! 👋</h2>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>📊 Ваши параметры</h3>
+                <p>📏 Рост: <strong>{{ user.height }} см</strong></p>
+                <p>⚖️ Вес: <strong>{{ user.weight }} кг</strong></p>
+                <p>🎯 Цель: <strong>{{ user.goal }}</strong></p>
+                <p>🏃 Активность: <strong>{{ user.activity }}</strong></p>
+                <a href="/profile" class="button">✏️ Редактировать профиль</a>
+            </div>
+            
+            <div class="card">
+                <h3>🏃‍♀️ Активность сегодня</h3>
+                {% if today_health %}
+                    <div class="metric">{{ today_health.steps }} <span class="unit">шагов</span></div>
+                    <div class="metric">{{ today_health.sleep_hours }} <span class="unit">часов сна</span></div>
+                    {% if today_health.weight %}
+                        <div class="metric">{{ today_health.weight }} <span class="unit">кг</span></div>
+                    {% endif %}
+                    <a href="/health" class="button">📝 Обновить данные</a>
+                {% else %}
+                    <p>Нет данных за сегодня</p>
+                    <a href="/health" class="button">➕ Добавить шаги и сон</a>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if steps_recommendation or sleep_recommendation %}
+        <div class="card">
+            <h3>💡 Рекомендации</h3>
+            {% if steps_recommendation %}
+                <div class="recommendation">{{ steps_recommendation }}</div>
+            {% endif %}
+            {% if sleep_recommendation %}
+                <div class="recommendation">{{ sleep_recommendation }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if last_week %}
+        <div class="card">
+            <h3>📈 Последние 7 дней</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background: #ff66b5; color: white;">
+                    <th style="padding: 10px; text-align: left;">Дата</th>
+                    <th style="padding: 10px; text-align: left;">Шаги</th>
+                    <th style="padding: 10px; text-align: left;">Сон (ч)</th>
+                </tr>
+                {% for day in last_week %}
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 8px;">{{ day.date }}</td>
+                    <td style="padding: 8px;">{{ day.steps }}</td>
+                    <td style="padding: 8px;">{{ day.sleep_hours }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+        
+        <div class="grid" style="margin-top: 20px;">
+            <div class="card">
+                <h3>🔍 Анализ осанки</h3>
+                <p>Загрузите фото для AI-анализа осанки</p>
+                <a href="/analyze" class="button">📸 Пройти анализ</a>
+            </div>
+            
+            <div class="card">
+                <h3>📜 История анализов</h3>
+                <p>Посмотрите динамику изменений</p>
+                <a href="/history" class="button">📊 Открыть историю</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
         
         <div class="grid">
             <div class="card">
