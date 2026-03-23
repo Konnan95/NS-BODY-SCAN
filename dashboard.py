@@ -1,5 +1,6 @@
 from flask import render_template, session, redirect, url_for, request
 from database import get_user_by_id, get_today_health, get_daily_health, get_progress_data
+from database import log_user_activity
 
 def get_recommendations(user, today_health):
     """Персонализированные рекомендации по шагам и сну"""
@@ -111,6 +112,7 @@ def dashboard_page():
         return redirect(url_for('login'))
     
     user = get_user_by_id(session['user_id'])
+    log_user_activity(session['user_id'], 'view', '/dashboard')
     
     # Получаем выбранный период (по умолчанию 30 дней)
     period = request.args.get('period', '30')

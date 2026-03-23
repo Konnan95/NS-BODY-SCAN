@@ -1,10 +1,12 @@
 from flask import request, session, redirect, url_for, flash, render_template
 from database import save_daily_health, get_today_health, get_user_by_id
+from database import log_user_activity
 
 def save_health():
     """Сохранить данные о шагах и сне"""
     if 'user_id' not in session:
         return redirect(url_for('login'))
+        log_user_activity(session['user_id'], 'save_health', '/save_health', f"steps={steps}, sleep={sleep_hours}")
     
     if request.method == 'POST':
         steps = request.form.get('steps', 0, type=int)

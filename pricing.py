@@ -1,5 +1,5 @@
 from flask import render_template, session, redirect, url_for, flash
-from database import get_user_by_id, get_db_connection
+from database import get_user_by_id, get_db_connection, log_user_activity
 
 def pricing_page():
     if 'user_id' not in session:
@@ -22,6 +22,9 @@ def subscribe(plan):
     cur.execute("UPDATE users SET subscription = %s WHERE id = %s", (plan, session['user_id']))
     conn.commit()
     conn.close()
+    
+    # Логируем смену подписки
+    log_user_activity(session['user_id'], 'subscription_change', '/subscribe', f"new_plan={plan}")
     
     # Получаем обновленного пользователя для сообщения
     user = get_user_by_id(session['user_id'])

@@ -264,3 +264,18 @@ def get_progress_data(user_id, days=30):
     result['sleep'] = sorted(result['sleep'], key=lambda x: x['date'])
     
     return result
+def log_user_activity(user_id, action, page=None, details=None):
+    """Логирование действий пользователя"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            INSERT INTO user_activity_logs (user_id, action, page, details)
+            VALUES (%s, %s, %s, %s)
+        """, (user_id, action, page, details))
+        conn.commit()
+        print(f"📝 Logged: {user_id} - {action} - {page}")
+    except Exception as e:
+        print(f"Log error: {e}")
+    finally:
+        conn.close()
