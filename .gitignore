@@ -10,3 +10,12 @@ __pycache__/
 *.db
 *.sqlite
 .DS_Store
+# Временные и тестовые файлы
+add_*.py
+check_*.py
+test_*.py
+static/reports/*.pdf
+uploads/*.jpg
+uploads/*.png
+*.pdf
+*.jpg
