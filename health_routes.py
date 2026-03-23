@@ -14,8 +14,10 @@ def save_health():
         if steps < 0 or sleep_hours < 0 or (weight and weight < 0):
             flash('Пожалуйста, введите корректные значения', 'danger')
         else:
-            save_daily_health(session['user_id'], steps, sleep_hours, weight)
-            flash('Данные сохранены!', 'success')
+            if save_daily_health(session['user_id'], steps, sleep_hours, weight):
+                flash('Данные сохранены!', 'success')
+            else:
+                flash('Ошибка при сохранении', 'danger')
     
     return redirect(url_for('dashboard'))
 

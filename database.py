@@ -6,7 +6,7 @@ def get_db_connection():
     """Получить соединение с базой данных"""
     return psycopg2.connect(**DB_CONFIG)
 
-def create_user(username, password, name, age, height, weight, goal, activity, role='user',
+def create_user(username, password, name, age, height, weight, goal, activity, role='user', subscription='free',
                 equipment=None, injuries=None, chronic_diseases=None,
                 problem_zones=None, allergies=None, preferences=None,
                 wake_time=None, sleep_time=None,
@@ -17,14 +17,14 @@ def create_user(username, password, name, age, height, weight, goal, activity, r
     cur = conn.cursor()
     hashed = generate_password_hash(password)
     cur.execute("""
-        INSERT INTO users (username, password, name, age, height, weight, goal, activity, role,
+        INSERT INTO users (username, password, name, age, height, weight, goal, activity, role, subscription,
                            equipment, injuries, chronic_diseases, problem_zones, allergies,
                            preferences, wake_time, sleep_time,
                            body_type, meals_per_day, eating_schedule,
                            favorite_foods, disliked_foods, food_budget)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
-    """, (username, hashed, name, age, height, weight, goal, activity, role,
+    """, (username, hashed, name, age, height, weight, goal, activity, role, subscription,
           equipment, injuries, chronic_diseases, problem_zones, allergies,
           preferences, wake_time, sleep_time,
           body_type, meals_per_day, eating_schedule,
@@ -42,11 +42,11 @@ def get_user_by_username(username):
     user = cur.fetchone()
     conn.close()
     if user:
-        columns = ['id', 'username', 'password', 'name', 'age', 'height', 'weight', 'goal', 'activity', 'role', 'created_at',
-                   'equipment', 'injuries', 'chronic_diseases', 'problem_zones', 'allergies',
-                   'preferences', 'wake_time', 'sleep_time',
-                   'body_type', 'meals_per_day', 'eating_schedule',
-                   'favorite_foods', 'disliked_foods', 'food_budget']
+        columns = ['id', 'username', 'password', 'name', 'age', 'height', 'weight', 'goal', 'activity', 'role', 'created_at', 'subscription',
+           'equipment', 'injuries', 'chronic_diseases', 'problem_zones', 'allergies',
+           'preferences', 'wake_time', 'sleep_time',
+           'body_type', 'meals_per_day', 'eating_schedule',
+           'favorite_foods', 'disliked_foods', 'food_budget']
         return dict(zip(columns, user))
     return None
 
@@ -58,11 +58,11 @@ def get_user_by_id(user_id):
     user = cur.fetchone()
     conn.close()
     if user:
-        columns = ['id', 'username', 'password', 'name', 'age', 'height', 'weight', 'goal', 'activity', 'role', 'created_at',
-                   'equipment', 'injuries', 'chronic_diseases', 'problem_zones', 'allergies',
-                   'preferences', 'wake_time', 'sleep_time',
-                   'body_type', 'meals_per_day', 'eating_schedule',
-                   'favorite_foods', 'disliked_foods', 'food_budget']
+        columns = ['id', 'username', 'password', 'name', 'age', 'height', 'weight', 'goal', 'activity', 'role', 'created_at', 'subscription',
+           'equipment', 'injuries', 'chronic_diseases', 'problem_zones', 'allergies',
+           'preferences', 'wake_time', 'sleep_time',
+           'body_type', 'meals_per_day', 'eating_schedule',
+           'favorite_foods', 'disliked_foods', 'food_budget']
         return dict(zip(columns, user))
     return None
 
@@ -114,24 +114,28 @@ def save_body_composition(user_id, body_fat, muscle_mass, water, visceral_fat):
     conn.close()
 
 def save_daily_health(user_id, steps, sleep_hours, weight=None):
-    """Сохранить данные о шагах и сне с обработкой конфликтов"""
+    """Сохранить данные о шагах и сне"""
+    from datetime import date
     conn = get_db_connection()
     cur = conn.cursor()
+    today = date.today()
+    
     try:
-        # Используем ON CONFLICT для обновления существующей записи за сегодня
         cur.execute("""
             INSERT INTO daily_health (user_id, steps, sleep_hours, weight, date)
-            VALUES (%s, %s, %s, %s, CURRENT_DATE)
+            VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (user_id, date) 
             DO UPDATE SET 
                 steps = EXCLUDED.steps,
                 sleep_hours = EXCLUDED.sleep_hours,
                 weight = EXCLUDED.weight
-        """, (user_id, steps, sleep_hours, weight))
+        """, (user_id, steps, sleep_hours, weight, today))
         conn.commit()
+        return True
     except Exception as e:
         print(f"Error saving daily health: {e}")
         conn.rollback()
+        return False
     finally:
         conn.close()
 
@@ -199,3 +203,64 @@ def get_user_history(user_id):
     composition = cur.fetchall()
     conn.close()
     return posture, composition
+
+def get_progress_data(user_id, days=30):
+    """Получить данные для графиков прогресса"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Данные состава тела (жир, мышцы)
+    cur.execute("""
+        SELECT created_at::date, body_fat, muscle_mass
+        FROM body_composition
+        WHERE user_id = %s
+        ORDER BY created_at ASC
+        LIMIT %s
+    """, (user_id, days))
+    body_data = cur.fetchall()
+    
+    # Данные активности (шаги, сон)
+    cur.execute("""
+        SELECT date, steps, sleep_hours
+        FROM daily_health
+        WHERE user_id = %s
+        ORDER BY date ASC
+        LIMIT %s
+    """, (user_id, days))
+    activity_data = cur.fetchall()
+    
+    conn.close()
+    
+    # Форматируем данные для графиков
+    result = {
+        'dates': [],
+        'body_fat': [],
+        'muscle_mass': [],
+        'steps': [],
+        'sleep': []
+    }
+    
+    # Обрабатываем данные состава тела
+    for row in body_data:
+        date_str = row[0].strftime('%d.%m')
+        result['dates'].append(date_str)
+        result['body_fat'].append(round(float(row[1]), 1) if row[1] else None)
+        result['muscle_mass'].append(round(float(row[2]), 1) if row[2] else None)
+    
+    # Обрабатываем данные активности
+    for row in activity_data:
+        date_str = row[0].strftime('%d.%m')
+        result['steps'].append({
+            'date': date_str,
+            'value': row[1] or 0
+        })
+        result['sleep'].append({
+            'date': date_str,
+            'value': round(float(row[2]), 1) if row[2] else 0
+        })
+    
+    # Сортируем шаги и сон по датам
+    result['steps'] = sorted(result['steps'], key=lambda x: x['date'])
+    result['sleep'] = sorted(result['sleep'], key=lambda x: x['date'])
+    
+    return result

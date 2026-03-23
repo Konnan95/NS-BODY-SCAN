@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Тарифы - NS Body Scan</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); min-height: 100vh; padding: 20px; margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
+        h1, h2 { color: #ff66b5; }
+        .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
+        .plan { background: #f8f9fa; border-radius: 15px; padding: 20px; text-align: center; border-left: 4px solid #ff66b5; }
+        .plan h3 { color: #ff66b5; margin-top: 0; }
+        .price { font-size: 32px; font-weight: bold; color: #ff66b5; margin: 15px 0; }
+        .features { list-style: none; padding: 0; text-align: left; margin: 20px 0; }
+        .features li { padding: 8px 0; border-bottom: 1px solid #eee; }
+        .button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .current { background: #28a745; cursor: default; }
+        .flash { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <h1>🧠 NS Body Scan</h1>
+            <div class="menu">
+                <a href="/dashboard">Главная</a>
+                <a href="/profile">Профиль</a>
+                <a href="/pricing">Тарифы</a>
+                <a href="/logout">Выйти</a>
+            </div>
+        </div>
+        
+        <h2>📋 Выберите свой тариф</h2>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        
+        <div class="pricing-grid">
+            <div class="plan">
+                <h3>🌟 Бесплатный</h3>
+                <div class="price">0 ₽</div>
+                <ul class="features">
+                    <li>✅ Базовый анализ осанки</li>
+                    <li>✅ История анализов</li>
+                    <li>✅ Шаги и сон</li>
+                    <li>❌ AI-рекомендации</li>
+                    <li>❌ Персональные планы</li>
+                </ul>
+                {% if user.subscription == 'free' %}
+                    <span class="button current">Текущий тариф</span>
+                {% else %}
+                    <a href="/subscribe/free" class="button">Выбрать</a>
+                {% endif %}
+            </div>
+            
+            <div class="plan">
+                <h3>🤖 AI-помощник</h3>
+                <div class="price">790 ₽/мес</div>
+                <ul class="features">
+                    <li>✅ Всё из бесплатного</li>
+                    <li>✅ AI-рекомендации по питанию</li>
+                    <li>✅ Персональные тренировки</li>
+                    <li>✅ Генерация планов (GigaChat)</li>
+                    <li>❌ Живой тренер</li>
+                </ul>
+                {% if user.subscription == 'ai_assistant' %}
+                    <span class="button current">Текущий тариф</span>
+                {% else %}
+                    <a href="/subscribe/ai_assistant" class="button">Выбрать</a>
+                {% endif %}
+            </div>
+            
+            <div class="plan">
+                <h3>🏆 AI+тренер</h3>
+                <div class="price">1490 ₽/мес</div>
+                <ul class="features">
+                    <li>✅ Всё из AI-помощника</li>
+                    <li>✅ Разборы с AI-тренером</li>
+                    <li>✅ Коррекция осанки в реальном времени</li>
+                    <li>✅ Голосовые рекомендации</li>
+                    <li>❌ Живой тренер</li>
+                </ul>
+                {% if user.subscription == 'ai_trainer' %}
+                    <span class="button current">Текущий тариф</span>
+                {% else %}
+                    <a href="/subscribe/ai_trainer" class="button">Выбрать</a>
+                {% endif %}
+            </div>
+            
+            <div class="plan">
+                <h3>👨‍🏫 Живой тренер</h3>
+                <div class="price">2990 ₽/мес</div>
+                <ul class="features">
+                    <li>✅ Всё из AI+тренера</li>
+                    <li>✅ Личный тренер</li>
+                    <li>✅ Разборы с тренером</li>
+                    <li>✅ Еженедельные созвоны</li>
+                    <li>✅ Корректировка планов</li>
+                </ul>
+                {% if user.subscription == 'human_trainer' %}
+                    <span class="button current">Текущий тариф</span>
+                {% else %}
+                    <a href="/subscribe/human_trainer" class="button">Выбрать</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

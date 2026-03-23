@@ -7,6 +7,7 @@ from analyze_routes import analyze_page
 from api_exercises import exercises_bp
 from history_routes import history_page
 from health_routes import save_health, health_page
+from pricing import pricing_page, subscribe
 import os
 
 app = Flask(__name__)
@@ -30,6 +31,8 @@ app.add_url_rule('/test', 'test', lambda: render_template('simple_test.html'))
 app.add_url_rule('/history', 'history', history_page)
 app.add_url_rule('/health', 'health', health_page, methods=['GET'])
 app.add_url_rule('/save_health', 'save_health', save_health, methods=['POST'])
+app.add_url_rule('/pricing', 'pricing', pricing_page)
+app.add_url_rule('/subscribe/<plan>', 'subscribe', subscribe)
 
 if __name__ == '__main__':
     app.run(debug=True)
