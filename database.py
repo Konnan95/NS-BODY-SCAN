@@ -42,11 +42,15 @@ def get_user_by_username(username):
     user = cur.fetchone()
     conn.close()
     if user:
-        columns = ['id', 'username', 'password', 'name', 'age', 'height', 'weight', 'goal', 'activity', 'role', 'created_at', 'subscription',
-           'equipment', 'injuries', 'chronic_diseases', 'problem_zones', 'allergies',
-           'preferences', 'wake_time', 'sleep_time',
-           'body_type', 'meals_per_day', 'eating_schedule',
-           'favorite_foods', 'disliked_foods', 'food_budget']
+        columns = [
+            'id', 'username', 'password', 'name', 'age', 'height', 'weight',
+            'goal', 'activity', 'role', 'created_at',
+            'body_type', 'meals_per_day', 'eating_schedule',
+            'favorite_foods', 'disliked_foods', 'food_budget',
+            'equipment', 'injuries', 'chronic_diseases', 'problem_zones',
+            'allergies', 'preferences', 'wake_time', 'sleep_time',
+            'subscription'
+        ]
         return dict(zip(columns, user))
     return None
 
@@ -58,11 +62,15 @@ def get_user_by_id(user_id):
     user = cur.fetchone()
     conn.close()
     if user:
-        columns = ['id', 'username', 'password', 'name', 'age', 'height', 'weight', 'goal', 'activity', 'role', 'created_at', 'subscription',
-           'equipment', 'injuries', 'chronic_diseases', 'problem_zones', 'allergies',
-           'preferences', 'wake_time', 'sleep_time',
-           'body_type', 'meals_per_day', 'eating_schedule',
-           'favorite_foods', 'disliked_foods', 'food_budget']
+        columns = [
+            'id', 'username', 'password', 'name', 'age', 'height', 'weight',
+            'goal', 'activity', 'role', 'created_at',
+            'body_type', 'meals_per_day', 'eating_schedule',
+            'favorite_foods', 'disliked_foods', 'food_budget',
+            'equipment', 'injuries', 'chronic_diseases', 'problem_zones',
+            'allergies', 'preferences', 'wake_time', 'sleep_time',
+            'subscription'
+        ]
         return dict(zip(columns, user))
     return None
 
@@ -264,6 +272,7 @@ def get_progress_data(user_id, days=30):
     result['sleep'] = sorted(result['sleep'], key=lambda x: x['date'])
     
     return result
+
 def log_user_activity(user_id, action, page=None, details=None):
     """Логирование действий пользователя"""
     conn = get_db_connection()

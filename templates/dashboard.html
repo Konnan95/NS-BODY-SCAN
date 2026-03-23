@@ -29,9 +29,10 @@
         .chart-box canvas { max-height: 250px; width: 100%; }
         .chart-title { text-align: center; margin-top: 10px; font-weight: bold; color: #ff66b5; }
         .period-buttons { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; flex-wrap: wrap; }
-        .recommendation-card { padding: 15px; border-radius: 10px; margin-bottom: 10px; }
-        .recommendation-title { margin: 0 0 10px 0; font-size: 16px; font-weight: bold; }
-        .recommendation-message { margin: 0; font-size: 14px; }
+        .badge-free { background: #e9ecef; padding: 5px 12px; border-radius: 20px; display: inline-block; font-size: 12px; color: #666; }
+        .badge-ai { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; padding: 5px 12px; border-radius: 20px; display: inline-block; font-size: 12px; }
+        .badge-trainer { background: linear-gradient(135deg, #ff9966 0%, #ff3388 100%); color: white; padding: 5px 12px; border-radius: 20px; display: inline-block; font-size: 12px; }
+        .badge-live { background: linear-gradient(135deg, #66ccff 0%, #3388ff 100%); color: white; padding: 5px 12px; border-radius: 20px; display: inline-block; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -39,12 +40,13 @@
         <div class="header">
             <h1>🧠 NS Body Scan</h1>
             <div class="menu">
-                <a href="/dashboard">Главная</a>
-                <a href="/profile">Профиль</a>
-                <a href="/analyze">Анализ</a>
-                <a href="/history">История</a>
-                <a href="/health">Шаги/Сон</a>
-                <a href="/logout">Выйти</a>
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/profile">👤 Профиль</a>
+                <a href="/analyze">🔍 Анализ</a>
+                <a href="/history">📜 История</a>
+                <a href="/health">🏃‍♀️ Шаги/Сон</a>
+                <a href="/pricing">💰 Тарифы</a>
+                <a href="/logout">🚪 Выйти</a>
             </div>
         </div>
         
@@ -57,12 +59,30 @@
         <h2>Привет, {{ user.name or user.username }}! 👋</h2>
         
         <div class="grid">
-            <div class="card">
-                <h3>📊 Ваши параметры</h3>
-                <p>📏 Рост: <strong>{{ user.height }} см</strong></p>
-                <p>⚖️ Вес: <strong>{{ user.weight }} кг</strong></p>
-                <p>🎯 Цель: <strong>{{ user.goal }}</strong></p>
-                <p>🏃 Активность: <strong>{{ user.activity }}</strong></p>
+            <<div class="card">
+    <h3>📊 Ваши параметры</h3>
+    <p>📏 Рост: <strong>{{ user.height }} см</strong></p>
+    <p>⚖️ Вес: <strong>{{ user.weight }} кг</strong></p>
+    <p>🎯 Цель: <strong>{{ user.goal }}</strong></p>
+    <p>🏃 Активность: <strong>{{ user.activity }}</strong></p>
+    
+        
+    <!-- Блок подписки -->
+    <p>⭐ Тариф: ...</p>
+                    {% if user.subscription == 'free' %}
+                        <span class="badge-free">🌟 Бесплатный</span>
+                    {% elif user.subscription == 'ai_assistant' %}
+                        <span class="badge-ai">🤖 AI-помощник</span>
+                    {% elif user.subscription == 'ai_trainer' %}
+                        <span class="badge-trainer">🏆 AI+тренер</span>
+                    {% elif user.subscription == 'human_trainer' %}
+                        <span class="badge-live">👨‍🏫 Живой тренер</span>
+                    {% else %}
+                        <span class="badge-free">🌟 Бесплатный</span>
+                    {% endif %}
+                    <a href="/pricing" style="font-size: 12px; margin-left: 10px; color: #ff66b5;">Изменить</a>
+                </p>
+                
                 <a href="/profile" class="button">✏️ Редактировать профиль</a>
             </div>
             
@@ -81,31 +101,6 @@
                 {% endif %}
             </div>
         </div>
-        
-        <!-- Персонализированные рекомендации -->
-        {% if recommendations %}
-        <div class="card">
-            <h3>💡 Персональные рекомендации</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                {% for rec in recommendations %}
-                <div class="recommendation-card" style="background: 
-                    {% if rec.priority == 'high' %}#f8d7da
-                    {% elif rec.priority == 'medium' %}#fff3cd
-                    {% elif rec.priority == 'success' %}#d4edda
-                    {% else %}#d1ecf1{% endif %};">
-                    <h4 class="recommendation-title" style="color: 
-                        {% if rec.priority == 'high' %}#721c24
-                        {% elif rec.priority == 'medium' %}#856404
-                        {% elif rec.priority == 'success' %}#155724
-                        {% else %}#0c5460{% endif %};">
-                        {{ rec.title }}
-                    </h4>
-                    <p class="recommendation-message">{{ rec.message }}</p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
         
         {% if last_week and last_week|length > 0 %}
         <div class="card">
