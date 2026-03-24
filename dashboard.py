@@ -1,5 +1,6 @@
 from flask import render_template, session, redirect, url_for, request
 from database import get_user_by_id, get_today_health, get_daily_health, get_progress_data, log_user_activity, get_active_workout_program
+from database import get_active_meal_plan
 
 def dashboard_page():
     if 'user_id' not in session:
@@ -25,6 +26,8 @@ def dashboard_page():
     
     # Получаем активную программу тренировок
     workout_program = get_active_workout_program(session['user_id'])
+    # Получаем активный план питания
+    meal_plan = get_active_meal_plan(session['user_id'])
     
     log_user_activity(session['user_id'], 'view', '/dashboard')
     
@@ -34,4 +37,5 @@ def dashboard_page():
                           last_week=last_week,
                           progress=progress,
                           selected_period=period,
-                          workout_program=workout_program)
+                          workout_program=workout_program,
+                          meal_plan=meal_plan)

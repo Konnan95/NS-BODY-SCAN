@@ -332,6 +332,80 @@ def get_active_workout_program(user_id):
             'created_at': row[3]
         }
     return None
+
+def save_meal_plan(user_id, plan_data, version=1, is_active=True):
+    """Сохранить план питания"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Деактивируем старую активную программу
+    cur.execute("""
+        UPDATE meal_plans 
+        SET is_active = FALSE 
+        WHERE user_id = %s AND is_active = TRUE
+    """, (user_id,))
+    
+    # Считаем новую версию
+    cur.execute("""
+        SELECT COALESCE(MAX(version), 0) + 1 
+        FROM meal_plans WHERE user_id = %s
+    """, (user_id,))
+    new_version = cur.fetchone()[0]
+    
+    # Сохраняем новую
+    cur.execute("""
+        INSERT INTO meal_plans (user_id, plan_data, version, is_active)
+        VALUES (%s, %s, %s, %s)
+    """, (user_id, plan_data, new_version, is_active))
+    conn.commit()
+    conn.close()
+    
+    return new_version
+
+def get_active_meal_plan(user_id):
+    """Получить активный план питания"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT plan_data, version, created_at
+        FROM meal_plans
+        WHERE user_id = %s AND is_active = TRUE
+        ORDER BY version DESC LIMIT 1
+    """, (user_id,))
+    row = cur.fetchone()
+    conn.close()
+    
+    if row:
+        return {
+            'plan_data': row[0],
+            'version': row[1],
+            'created_at': row[2]
+        }
+    return None
+
+def get_meal_plan_history(user_id, limit=10):
+    """Получить историю планов питания"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT plan_data, version, created_at, is_active
+        FROM meal_plans
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+        LIMIT %s
+    """, (user_id, limit))
+    rows = cur.fetchall()
+    conn.close()
+    
+    result = []
+    for row in rows:
+        result.append({
+            'plan_data': row[0],
+            'version': row[1],
+            'created_at': row[2],
+            'is_active': row[3]
+        })
+    return result
 def log_user_activity(user_id, action, page=None, details=None):
     """Логирование действий пользователя"""
     conn = get_db_connection()

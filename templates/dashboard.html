@@ -183,6 +183,23 @@
             <a href="/analyze" class="button">📸 Пройти анализ</a>
         </div>
         {% endif %}
+        <!-- Блок плана питания -->
+{% if meal_plan %}
+<div class="card">
+    <h3>🥗 Текущий план питания</h3>
+    <p class="date">Версия {{ meal_plan.version }} от {{ meal_plan.created_at.strftime('%d.%m.%Y') if meal_plan.created_at else 'недавно' }}</p>
+    <pre style="white-space: pre-wrap; font-family: inherit; background: white; padding: 15px; border-radius: 10px; max-height: 300px; overflow-y: auto; font-size: 13px;">
+{{ meal_plan.plan_data }}
+    </pre>
+    <a href="/generate_meal" class="button">🔄 Сгенерировать новый план питания</a>
+</div>
+{% else %}
+<div class="card">
+    <h3>🥗 План питания</h3>
+    <p>У вас пока нет активного плана питания. Пройдите анализ осанки, чтобы получить персональные рекомендации!</p>
+    <a href="/analyze" class="button">📸 Пройти анализ</a>
+</div>
+{% endif %}
         
         <div class="grid">
             <div class="card">

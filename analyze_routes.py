@@ -3,7 +3,7 @@
 """
 
 from flask import request, redirect, url_for, session, flash, render_template
-from database import get_user_by_id, save_posture_analysis, save_body_composition, save_workout_program
+from database import get_user_by_id, save_posture_analysis, save_body_composition, save_workout_program, save_meal_plan
 from posture_analyzer import analyze_posture, save_analyzed_photo, save_original_photo
 from config import UPLOAD_FOLDER
 import os
@@ -205,6 +205,14 @@ def analyze_page():
 Напиши план на день с граммовками продуктов.
 """
         meal_plan = ask_gigachat(meal_prompt)
+        # Сохраняем план питания в БД
+        from database import save_meal_plan
+        save_meal_plan(
+            user_id=user['id'],
+            plan_data=meal_plan,
+            is_active=True
+        )
+        print(f"✅ План питания сохранён для user {user['id']}")
         
         # Генерация PDF-отчёта
         pdf_url = generate_pdf_report(user, 

@@ -9,6 +9,7 @@ from history_routes import history_page
 from health_routes import save_health, health_page
 from pricing import pricing_page, subscribe
 from generate_workout import generate_workout_page, generate_workout_api
+from generate_meal import generate_meal_page
 import os
 
 app = Flask(__name__)
@@ -72,6 +73,7 @@ def serve_media(filename):
     return send_from_directory('static/media', filename)
 app.add_url_rule('/generate_workout', 'generate_workout', generate_workout_page, methods=['GET', 'POST'])
 app.add_url_rule('/api/generate_workout', 'generate_workout_api', generate_workout_api, methods=['POST'])
+app.add_url_rule('/generate_meal', 'generate_meal', generate_meal_page, methods=['GET', 'POST'])
 
 if __name__ == '__main__':
     app.run(debug=True)
