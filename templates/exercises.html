@@ -1,317 +1,158 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Библиотека упражнений - NSBodyScan</title>
+    <title>Библиотека упражнений - NS Body Scan</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container { max-width: 1400px; margin: 0 auto; }
-        .header {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        h1 { color: #333; margin-bottom: 10px; }
-        .stats { color: #666; font-size: 14px; }
-        .filters {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        .filter-group { margin-bottom: 15px; }
-        .filter-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #555;
-        }
-        select, input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        select:focus, input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        .search-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .search-row input { flex: 1; }
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: transform 0.2s;
-        }
-        button:hover { transform: translateY(-2px); }
-        .exercises-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
-        .exercise-card {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-        }
-        .exercise-card:hover { transform: translateY(-5px); }
-        .exercise-gif {
-            width: 100%;
-            height: 200px;
-            background: #f5f5f5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .exercise-gif img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .exercise-info { padding: 15px; }
-        .exercise-name {
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 8px;
-            color: #333;
-        }
-        .exercise-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-top: 10px;
-        }
-        .tag {
-            background: #f0f0f0;
-            padding: 4px 8px;
-            border-radius: 5px;
-            font-size: 11px;
-            color: #666;
-        }
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: white;
-            font-size: 18px;
-        }
-        .error {
-            background: #ff4444;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); min-height: 100vh; padding: 20px; margin: 0; }
+        .container { max-width: 1400px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
+        h1, h2 { color: #ff66b5; }
+        .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
+        .exercise-card { background: #f8f9fa; border-radius: 15px; padding: 15px; border-left: 4px solid #ff66b5; transition: transform 0.2s; }
+        .exercise-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .exercise-card h3 { margin: 0 0 10px 0; color: #ff66b5; font-size: 18px; }
+        .exercise-media { text-align: center; margin: 10px 0; min-height: 150px; display: flex; align-items: center; justify-content: center; background: #e9ecef; border-radius: 10px; overflow: hidden; }
+        .exercise-media img { max-width: 100%; max-height: 150px; object-fit: contain; }
+        .exercise-details { font-size: 12px; color: #666; margin-top: 10px; }
+        .badge { display: inline-block; background: #ff66b5; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin: 2px; }
+        .search { width: 100%; padding: 12px; margin: 20px 0; border: 1px solid #ddd; border-radius: 25px; font-size: 16px; box-sizing: border-box; }
+        .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .filter-btn { background: #e9ecef; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: 0.2s; }
+        .filter-btn.active { background: #ff66b5; color: white; }
+        .no-results { text-align: center; padding: 40px; color: #999; }
+        .stats { color: #666; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 10px; }
+        .button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; text-decoration: none; display: inline-block; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🏋️ Библиотека упражнений</h1>
-            <div class="stats" id="stats">Загрузка статистики...</div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <h1>🧠 NS Body Scan</h1>
+            <div class="menu">
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/profile">👤 Профиль</a>
+                <a href="/analyze">🔍 Анализ</a>
+                <a href="/history">📜 История</a>
+                <a href="/health">🏃‍♀️ Шаги/Сон</a>
+                <a href="/pricing">💰 Тарифы</a>
+                <a href="/logout">🚪 Выйти</a>
+            </div>
         </div>
+        
+        <h2>📚 Библиотека упражнений</h2>
+        <p>Более 1500 упражнений с GIF-демонстрациями</p>
+        
+        <input type="text" id="searchInput" class="search" placeholder="🔍 Поиск упражнений... (например: приседания, отжимания)">
         
         <div class="filters">
-            <div class="search-row">
-                <input type="text" id="searchInput" placeholder="Поиск упражнений...">
-                <button onclick="searchExercises()">🔍 Найти</button>
-                <button onclick="resetFilters()">🔄 Сбросить</button>
-            </div>
-            
-            <div class="filter-group">
-                <label>🎯 Целевая мышца:</label>
-                <select id="muscleFilter">
-                    <option value="">Все мышцы</option>
-                </select>
-            </div>
-            
-            <div class="filter-group">
-                <label>🛠️ Инвентарь:</label>
-                <select id="equipmentFilter">
-                    <option value="">Весь инвентарь</option>
-                </select>
-            </div>
-            
-            <div class="filter-group">
-                <label>💪 Часть тела:</label>
-                <select id="bodyPartFilter">
-                    <option value="">Все части</option>
-                </select>
-            </div>
+            <button class="filter-btn active" data-filter="all">Все</button>
+            <button class="filter-btn" data-filter="chest">Грудь</button>
+            <button class="filter-btn" data-filter="back">Спина</button>
+            <button class="filter-btn" data-filter="legs">Ноги</button>
+            <button class="filter-btn" data-filter="shoulders">Плечи</button>
+            <button class="filter-btn" data-filter="arms">Руки</button>
+            <button class="filter-btn" data-filter="core">Пресс</button>
         </div>
         
-        <div id="exercisesContainer" class="exercises-grid">
-            <div class="loading">Загрузка упражнений...</div>
+        <div class="stats" id="stats"></div>
+        
+        <div class="grid" id="exercisesGrid">
+            {% for ex in exercises %}
+            <div class="exercise-card" 
+                 data-name="{{ ex.name|lower }}" 
+                 data-muscle="{% for m in ex.target_muscles %}{{ m|lower }}{% if not loop.last %},{% endif %}{% endfor %}">
+                <h3>{{ ex.name }}</h3>
+                <div class="exercise-media">
+    {% if ex.media and ex.media.url %}
+    <img src="{{ ex.media.url }}" alt="{{ ex.name }}" loading="lazy" 
+         onerror="this.parentElement.innerHTML='<div style=\'padding:40px;text-align:center;\'>🎥 GIF</div>'">
+    <!-- ОТЛАДКА: путь = {{ ex.media.url }} -->
+    {% else %}
+    <div style="padding: 40px; text-align: center;">🎥 GIF (нет пути: media={{ ex.media }})</div>
+    {% endif %}
+</div>
+                <div class="exercise-details">
+                    {% if ex.target_muscles %}
+                    <div>🎯 <strong>Мышцы:</strong> {{ ex.target_muscles[:3]|join(', ') }}</div>
+                    {% endif %}
+                    {% if ex.instructions %}
+                    <details>
+                        <summary>📖 Инструкция</summary>
+                        <ul style="margin: 5px 0 0 15px; padding: 0;">
+                            {% for instr in ex.instructions[:2] %}
+                            <li>{{ instr }}</li>
+                            {% endfor %}
+                        </ul>
+                    </details>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div id="noResults" class="no-results" style="display: none;">
+            😕 Упражнения не найдены. Попробуйте другой запрос.
         </div>
     </div>
     
     <script>
-        let allExercises = [];
-        let totalExercises = 0;
+        const searchInput = document.getElementById('searchInput');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const cards = document.querySelectorAll('.exercise-card');
+        const statsDiv = document.getElementById('stats');
+        const noResultsDiv = document.getElementById('noResults');
+        const exercisesGrid = document.getElementById('exercisesGrid');
         
-        async function loadStats() {
-            try {
-                const response = await fetch('/api/exercises/stats');
-                const stats = await response.json();
-                totalExercises = stats.exercises_with_media;
-                document.getElementById('stats').innerHTML = 
-                    `📊 Всего упражнений: ${stats.exercises_with_media} | 🎯 Мышц: ${stats.unique_muscles} | 🛠️ Инвентаря: ${stats.unique_equipment}`;
-            } catch (error) {
-                console.error('Ошибка:', error);
-            }
+        let currentFilter = 'all';
+        let currentSearch = '';
+        
+        function updateStats(visibleCount, totalCount) {
+            statsDiv.innerHTML = `📊 Показано ${visibleCount} из ${totalCount} упражнений`;
         }
         
-        async function loadFilters() {
-            try {
-                const musclesRes = await fetch('/api/exercises/muscles');
-                const musclesData = await musclesRes.json();
-                const muscleSelect = document.getElementById('muscleFilter');
-                musclesData.muscles.forEach(muscle => {
-                    const option = document.createElement('option');
-                    option.value = muscle;
-                    option.textContent = muscle;
-                    muscleSelect.appendChild(option);
-                });
+        function filterExercises() {
+            let visibleCount = 0;
+            
+            cards.forEach(card => {
+                const name = card.dataset.name || '';
+                const muscle = card.dataset.muscle || '';
+                const searchMatch = currentSearch === '' || name.includes(currentSearch) || muscle.includes(currentSearch);
+                const filterMatch = currentFilter === 'all' || muscle.includes(currentFilter);
                 
-                const equipmentRes = await fetch('/api/exercises/equipment');
-                const equipmentData = await equipmentRes.json();
-                const equipmentSelect = document.getElementById('equipmentFilter');
-                equipmentData.equipment.forEach(eq => {
-                    const option = document.createElement('option');
-                    option.value = eq;
-                    option.textContent = eq;
-                    equipmentSelect.appendChild(option);
-                });
-                
-                const bodyPartsRes = await fetch('/api/exercises/body-parts');
-                const bodyPartsData = await bodyPartsRes.json();
-                const bodyPartSelect = document.getElementById('bodyPartFilter');
-                bodyPartsData.bodyParts.forEach(part => {
-                    const option = document.createElement('option');
-                    option.value = part;
-                    option.textContent = part;
-                    bodyPartSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Ошибка:', error);
-            }
-        }
-        
-        async function loadExercises() {
-            try {
-                const response = await fetch('/api/exercises');
-                const data = await response.json();
-                if (data.exercises && data.exercises.length > 0) {
-                    allExercises = data.exercises;
-                    totalExercises = data.total;
-                    displayExercises(allExercises);
+                if (searchMatch && filterMatch) {
+                    card.style.display = '';
+                    visibleCount++;
                 } else {
-                    document.getElementById('exercisesContainer').innerHTML = '<div class="error">Нет данных</div>';
+                    card.style.display = 'none';
                 }
-            } catch (error) {
-                document.getElementById('exercisesContainer').innerHTML = '<div class="error">Ошибка загрузки</div>';
+            });
+            
+            updateStats(visibleCount, cards.length);
+            
+            if (visibleCount === 0) {
+                noResultsDiv.style.display = 'block';
+                exercisesGrid.style.display = 'none';
+            } else {
+                noResultsDiv.style.display = 'none';
+                exercisesGrid.style.display = 'grid';
             }
         }
         
-        async function searchExercises() {
-            const searchQuery = document.getElementById('searchInput').value;
-            const muscle = document.getElementById('muscleFilter').value;
-            const equipment = document.getElementById('equipmentFilter').value;
-            const bodyPart = document.getElementById('bodyPartFilter').value;
-            
-            if (!searchQuery && !muscle && !equipment && !bodyPart) {
-                displayExercises(allExercises);
-                return;
-            }
-            
-            const filters = {
-                search: searchQuery,
-                muscles: muscle ? [muscle] : [],
-                equipment: equipment ? [equipment] : [],
-                bodyParts: bodyPart ? [bodyPart] : []
-            };
-            
-            try {
-                const response = await fetch('/api/exercises/filter', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(filters)
-                });
-                const data = await response.json();
-                displayExercises(data.exercises);
-            } catch (error) {
-                console.error('Ошибка:', error);
-            }
-        }
+        searchInput.addEventListener('input', (e) => {
+            currentSearch = e.target.value.toLowerCase();
+            filterExercises();
+        });
         
-        function displayExercises(exercises) {
-            const container = document.getElementById('exercisesContainer');
-            
-            if (!exercises || exercises.length === 0) {
-                container.innerHTML = '<div class="loading">😔 Упражнения не найдены</div>';
-                return;
-            }
-            
-            const statsDiv = document.getElementById('stats');
-            if (exercises.length !== totalExercises) {
-                statsDiv.innerHTML = `📊 Найдено: ${exercises.length} из ${totalExercises} упражнений`;
-            }
-            
-            container.innerHTML = exercises.map(ex => {
-                let gifFileName = ex.gifUrl.split('/').pop();
-                const gifPath = `/static/media/${gifFileName}`;
-                
-                return `
-                    <div class="exercise-card">
-                        <div class="exercise-gif">
-                            <img src="${gifPath}" alt="${ex.name}" loading="lazy" onerror="this.style.display='none'">
-                        </div>
-                        <div class="exercise-info">
-                            <div class="exercise-name">${ex.name}</div>
-                            <div class="exercise-tags">
-                                ${ex.targetMuscles ? ex.targetMuscles.map(m => `<span class="tag">🎯 ${m}</span>`).join('') : ''}
-                                ${ex.equipments ? ex.equipments.map(e => `<span class="tag">🛠️ ${e}</span>`).join('') : ''}
-                                ${ex.bodyParts ? ex.bodyParts.map(p => `<span class="tag">💪 ${p}</span>`).join('') : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                filterExercises();
+            });
+        });
         
-        function resetFilters() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('muscleFilter').value = '';
-            document.getElementById('equipmentFilter').value = '';
-            document.getElementById('bodyPartFilter').value = '';
-            displayExercises(allExercises);
-            loadStats();
-        }
-        
-        loadStats();
-        loadFilters();
-        loadExercises();
+        filterExercises();
     </script>
 </body>
 </html>

@@ -99,17 +99,27 @@ def update_user_profile(user_id, name, age, height, weight, goal, activity,
     conn.commit()
     conn.close()
 
-def save_posture_analysis(user_id, shoulder_slope, hip_slope, head_tilt, posture_score):
-    """Сохранить анализ осанки"""
+def save_posture_analysis(user_id, shoulder_slope, hip_slope, head_tilt, posture_score,
+                          kyphosis=None, neck_angle=None, knee_valgus=None, symmetry=None,
+                          original_photo_path=None, analyzed_photo_path=None,
+                          front_photo_path=None, side_photo_path=None):
+    """Сохранить анализ осанки с расширенными метриками и фото"""
     conn = get_db_connection()
     cur = conn.cursor()
+    
     cur.execute("""
-        INSERT INTO posture_analyses (user_id, shoulder_slope, hip_slope, head_tilt, posture_score)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (user_id, shoulder_slope, hip_slope, head_tilt, posture_score))
+        INSERT INTO posture_analyses 
+        (user_id, shoulder_slope, hip_slope, head_tilt, posture_score,
+         kyphosis, neck_angle, knee_valgus, symmetry,
+         original_photo_path, analyzed_photo_path, front_photo_path, side_photo_path)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (
+        user_id, shoulder_slope, hip_slope, head_tilt, posture_score,
+        kyphosis, neck_angle, knee_valgus, symmetry,
+        original_photo_path, analyzed_photo_path, front_photo_path, side_photo_path
+    ))
     conn.commit()
     conn.close()
-
 def save_body_composition(user_id, body_fat, muscle_mass, water, visceral_fat):
     """Сохранить анализ состава тела"""
     conn = get_db_connection()
@@ -272,7 +282,56 @@ def get_progress_data(user_id, days=30):
     result['sleep'] = sorted(result['sleep'], key=lambda x: x['date'])
     
     return result
+def save_workout_program(user_id, program_data, days_per_week=3, version=1, is_active=True):
+    """Сохранить программу тренировок"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Деактивируем старую активную программу
+    cur.execute("""
+        UPDATE workout_programs 
+        SET is_active = FALSE 
+        WHERE user_id = %s AND is_active = TRUE
+    """, (user_id,))
+    
+    # Считаем новую версию
+    cur.execute("""
+        SELECT COALESCE(MAX(version), 0) + 1 
+        FROM workout_programs WHERE user_id = %s
+    """, (user_id,))
+    new_version = cur.fetchone()[0]
+    
+    # Сохраняем новую
+    cur.execute("""
+        INSERT INTO workout_programs (user_id, program_data, days_per_week, version, is_active)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (user_id, program_data, days_per_week, new_version, is_active))
+    conn.commit()
+    conn.close()
+    
+    return new_version
 
+def get_active_workout_program(user_id):
+    """Получить активную программу тренировок"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT program_data, version, days_per_week, created_at
+        FROM workout_programs
+        WHERE user_id = %s AND is_active = TRUE
+        ORDER BY version DESC LIMIT 1
+    """, (user_id,))
+    row = cur.fetchone()
+    conn.close()
+    
+    if row:
+        return {
+            'program_data': row[0],
+            'version': row[1],
+            'days_per_week': row[2],
+            'created_at': row[3]
+        }
+    return None
 def log_user_activity(user_id, action, page=None, details=None):
     """Логирование действий пользователя"""
     conn = get_db_connection()

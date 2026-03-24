@@ -53,6 +53,31 @@
             flex-wrap: wrap;
             margin-top: 20px;
         }
+        .photo-container {
+            text-align: center;
+            margin: 10px 0;
+        }
+        .photo-container img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .photo-container img:hover {
+            transform: scale(1.02);
+        }
+        .photo-caption {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+        }
+        .download-link {
+            font-size: 12px;
+            color: #ff66b5;
+            text-decoration: none;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -60,19 +85,58 @@
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
             <h1>🧠 NS Body Scan</h1>
             <div class="menu">
-                <a href="/dashboard">Главная</a>
-                <a href="/profile">Профиль</a>
-                <a href="/analyze">Анализ</a>
-                <a href="/history">История</a>
-                <a href="/logout">Выйти</a>
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/profile">👤 Профиль</a>
+                <a href="/analyze">🔍 Анализ</a>
+                <a href="/history">📜 История</a>
+                <a href="/health">🏃‍♀️ Шаги/Сон</a>
+                <a href="/pricing">💰 Тарифы</a>
+                <a href="/logout">🚪 Выйти</a>
             </div>
         </div>
         
+        <!-- Фото с разметкой (три ракурса) -->
+<div class="card">
+    <h3>📸 Визуализация анализа осанки</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+        {% if front_photo_path %}
+        <div class="photo-container">
+            <img src="/{{ front_photo_path }}" alt="Спереди" onclick="window.open(this.src)">
+            <div class="photo-caption">👤 Спереди</div>
+        </div>
+        {% endif %}
+        {% if side_photo_path %}
+        <div class="photo-container">
+            <img src="/{{ side_photo_path }}" alt="Сбоку" onclick="window.open(this.src)">
+            <div class="photo-caption">↔️ Сбоку</div>
+        </div>
+        {% endif %}
+        {% if analyzed_photo_path %}
+        <div class="photo-container">
+            <img src="/{{ analyzed_photo_path }}" alt="Сзади" onclick="window.open(this.src)">
+            <div class="photo-caption">🔙 Сзади</div>
+        </div>
+        {% endif %}
+    </div>
+    <p style="text-align: center; font-size: 12px; color: #666; margin-top: 10px;">
+        📌 На фото отмечены 33 ключевые точки (MediaPipe Pose)
+    </p>
+</div>
+        
         <div class="card">
             <h2>📊 Результаты анализа</h2>
-            <p>📐 <strong>Наклон плеч:</strong> {{ shoulder }}°</p>
-            <p>📐 <strong>Наклон таза:</strong> {{ hip }}°</p>
+            <p>📐 <strong>Наклон плеч:</strong> {{ shoulder }}%</p>
+            <p>📐 <strong>Наклон таза:</strong> {{ hip }}%</p>
             <p>📐 <strong>Наклон головы:</strong> {{ head }}°</p>
+            {% if kyphosis %}
+            <p>📐 <strong>Грудной кифоз:</strong> {{ kyphosis }}%</p>
+            {% endif %}
+            {% if neck_angle %}
+            <p>📐 <strong>Угол шеи:</strong> {{ neck_angle }}°</p>
+            {% endif %}
+            {% if symmetry %}
+            <p>📐 <strong>Симметрия тела:</strong> {{ symmetry }}%</p>
+            {% endif %}
             <p>⭐ <span class="score">Оценка осанки: {{ score }}/10</span></p>
         </div>
         
