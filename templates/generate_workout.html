@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Генерация программы - NS Body Scan</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
+        h1 { color: #ff66b5; }
+        .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
+        select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; cursor: pointer; }
+        .flash { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .danger { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <h1>🧠 NS Body Scan</h1>
+            <div class="menu">
+                <a href="/dashboard">Главная</a>
+                <a href="/profile">Профиль</a>
+                <a href="/logout">Выйти</a>
+            </div>
+        </div>
+        
+        <h2>🏋️ Сгенерировать новую программу</h2>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        
+        <form method="post">
+            <label>Количество тренировок в неделю:</label>
+            <select name="days">
+                <option value="3">3 дня</option>
+                <option value="4">4 дня</option>
+                <option value="5">5 дней</option>
+                <option value="6">6 дней</option>
+            </select>
+            <button type="submit">🚀 Сгенерировать программу</button>
+        </form>
+        
+        <p style="text-align: center; margin-top: 20px;">
+            <a href="/dashboard" style="color: #ff66b5;">← Вернуться на дашборд</a>
+        </p>
+    </div>
+</body>
+</html>
