@@ -38,6 +38,8 @@
         .date { color: #ff66b5; font-size: 12px; margin-bottom: 10px; }
         .theme-toggle { background: none; border: none; cursor: pointer; font-size: 18px; padding: 5px 10px; border-radius: 20px; transition: 0.2s; }
         .theme-toggle:hover { background: rgba(0,0,0,0.1); }
+        .locked { background: #fff3cd; border-left-color: #ffc107; }
+        .locked h3 { color: #856404; }
     </style>
 </head>
 <body>
@@ -51,7 +53,6 @@
                 <a href="/history">📜 История</a>
                 <a href="/health">🏃‍♀️ Шаги/Сон</a>
                 <a href="/pricing">💰 Тарифы</a>
-                <a href="/analyze_video_page">🎥 Анализ техники</a>
                 <button onclick="toggleTheme()" class="theme-toggle">🌙</button>
                 <a href="/logout">🚪 Выйти</a>
             </div>
@@ -84,28 +85,6 @@
                     </p>
                 </div>
                 {% endif %}
-           <!-- Прогноз прогресса -->
-{% if progress_forecast %}
-<div class="card" style="background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%); color: white;">
-    <h3 style="color: white;">🔮 Прогноз на месяц</h3>
-    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-        {% if progress_forecast.body_fat %}
-        <div>
-            <p>📉 % жира</p>
-            <p style="font-size: 24px; font-weight: bold;">{{ progress_forecast.body_fat }}%</p>
-            <p style="font-size: 12px;">Тренд: {{ progress_forecast.body_fat_trend }}</p>
-        </div>
-        {% endif %}
-        {% if progress_forecast.weight %}
-        <div>
-            <p>⚖️ Вес</p>
-            <p style="font-size: 24px; font-weight: bold;">{{ progress_forecast.weight }} кг</p>
-        </div>
-        {% endif %}
-    </div>
-    <p style="font-size: 12px; margin-top: 10px;">💡 При сохранении текущего темпа</p>
-</div>
-{% endif %}
                 
                 {% if prev_composition and last_body_fat %}
                 <div>
@@ -123,6 +102,29 @@
                 {% endif %}
             </div>
             <p style="font-size: 12px; margin-top: 10px;">Сравнение с предыдущим анализом</p>
+        </div>
+        {% endif %}
+        
+        <!-- Прогноз прогресса -->
+        {% if progress_forecast %}
+        <div class="card" style="background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%); color: white;">
+            <h3 style="color: white;">🔮 Прогноз на месяц</h3>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                {% if progress_forecast.body_fat %}
+                <div>
+                    <p>📉 % жира</p>
+                    <p style="font-size: 24px; font-weight: bold;">{{ progress_forecast.body_fat }}%</p>
+                    <p style="font-size: 12px;">Тренд: {{ progress_forecast.body_fat_trend }}</p>
+                </div>
+                {% endif %}
+                {% if progress_forecast.weight %}
+                <div>
+                    <p>⚖️ Вес</p>
+                    <p style="font-size: 24px; font-weight: bold;">{{ progress_forecast.weight }} кг</p>
+                </div>
+                {% endif %}
+            </div>
+            <p style="font-size: 12px; margin-top: 10px;">💡 При сохранении текущего темпа</p>
         </div>
         {% endif %}
         
@@ -176,20 +178,20 @@
                     <th>Дата</th>
                     <th>Шаги</th>
                     <th>Сон (ч)</th>
-                 </tr>
+                </tr>
                 {% for day in last_week %}
-                 <tr>
+                <tr>
                     <td>{{ day.date }}</td>
                     <td>{{ day.steps }}</td>
                     <td>{{ day.sleep_hours }}</td>
-                 </tr>
+                </tr>
                 {% endfor %}
-             </table>
+            </table>
         </div>
         {% endif %}
         
-        <!-- Графики прогресса -->
-        {% if progress.dates and (progress.body_fat or progress.muscle_mass or progress.steps or progress.sleep) %}
+        <!-- Графики прогресса (только для платных) -->
+        {% if user.subscription != 'free' and progress.dates and (progress.body_fat or progress.muscle_mass or progress.steps or progress.sleep) %}
         <div class="card">
             <h3>📈 Графики прогресса</h3>
             
@@ -239,8 +241,10 @@
             <p class="date">Версия {{ workout_program.version }} от {{ workout_program.created_at.strftime('%d.%m.%Y') if workout_program.created_at else 'недавно' }}</p>
             <p>📅 {{ workout_program.days_per_week }} тренировок в неделю</p>
             <pre>{{ workout_program.program_data }}</pre>
-            <a href="/generate_workout" class="button">🔄 Сгенерировать новую программу</a>
             <a href="/workout_history" class="button" style="background: #6c757d;">📜 История версий</a>
+            {% if user.subscription != 'free' %}
+            <a href="/generate_workout" class="button">🔄 Сгенерировать новую программу</a>
+            {% endif %}
         </div>
         {% else %}
         <div class="card">
@@ -256,8 +260,10 @@
             <h3>🥗 Текущий план питания</h3>
             <p class="date">Версия {{ meal_plan.version }} от {{ meal_plan.created_at.strftime('%d.%m.%Y') if meal_plan.created_at else 'недавно' }}</p>
             <pre>{{ meal_plan.plan_data }}</pre>
-            <a href="/generate_meal" class="button">🔄 Сгенерировать новый план питания</a>
             <a href="/meal_history" class="button" style="background: #6c757d;">📜 История версий</a>
+            {% if user.subscription != 'free' %}
+            <a href="/generate_meal" class="button">🔄 Сгенерировать новый план питания</a>
+            {% endif %}
         </div>
         {% else %}
         <div class="card">
@@ -268,66 +274,68 @@
         {% endif %}
         
         <div class="grid">
-    <div class="card">
-        <h3>🔍 Анализ осанки</h3>
-        <p>Загрузите фото для AI-анализа осанки</p>
-        <a href="/analyze" class="button">📸 Пройти анализ</a>
-    </div>
-    
-    <div class="card">
-        <h3>🎥 Анализ техники упражнений</h3>
-        <p>Загрузите видео выполнения упражнения. AI оценит вашу технику</p>
-        <a href="/analyze_video_page" class="button">🎬 Проанализировать</a>
-    </div>
-    
-    <div class="card">
-        <h3>📜 История анализов</h3>
-        <p>Посмотрите динамику изменений</p>
-        <a href="/history" class="button">📊 Открыть историю</a>
-    </div>
-</div>
-
-<div class="grid">
-    <!-- Библиотека упражнений с проверкой подписки -->
-    {% if user.subscription != 'free' %}
-    <div class="card">
-        <h3>📚 Библиотека упражнений</h3>
-        <p>Более 1500 упражнений с GIF-демонстрациями</p>
-        <a href="/exercises" class="button">🏋️ Открыть библиотеку</a>
-    </div>
-    {% else %}
-    <div class="card" style="background: #fff3cd;">
-        <h3>🔒 Библиотека упражнений</h3>
-        <p>Доступна на тарифе "AI-помощник"</p>
-        <a href="/pricing" class="button">🚀 Повысить подписку</a>
-    </div>
-    {% endif %}
-    
-    <div class="card">
-        <h3>📊 Ваши данные</h3>
-        <p>🎯 Цель: 
-            {% if user.goal == 'lose' %}Похудение
-            {% elif user.goal == 'gain' %}Набор массы
-            {% elif user.goal == 'posture' %}Коррекция осанки
-            {% else %}Подтянутое тело{% endif %}
-        </p>
-        <p>📏 Рост: {{ user.height }} см</p>
-        <p>⚖️ Вес: {{ user.weight }} кг</p>
-        <p>🎂 Возраст: {{ user.age }} лет</p>
-        <p>⭐ Роль: {% if user.role == 'trainer' %}Тренер{% else %}Клиент{% endif %}</p>
-    </div>
-    
-    <div class="card">
-        <h3>🤖 AI-помощник</h3>
-        <p>Загрузите 3 фото (спереди, сзади, сбоку)</p>
-        <p>ИИ проанализирует вашу осанку и даст рекомендации</p>
-        <a href="/analyze" class="button">📸 Начать анализ</a>
-    </div>
-</div>
-    <h3>📊 История анализов техники</h3>
-    <p>Посмотрите предыдущие результаты</p>
-    <a href="/exercise_history" class="button">📋 Открыть историю</a>
-</div>
+            <div class="card">
+                <h3>🔍 Анализ осанки</h3>
+                <p>Загрузите фото для AI-анализа осанки</p>
+                <a href="/analyze" class="button">📸 Пройти анализ</a>
+            </div>
+            
+            {% if user.subscription != 'free' %}
+            <div class="card">
+                <h3>🎥 Анализ техники упражнений</h3>
+                <p>Загрузите видео выполнения упражнения. AI оценит вашу технику</p>
+                <a href="/analyze_video_page" class="button">🎬 Проанализировать</a>
+            </div>
+            {% else %}
+            <div class="card locked">
+                <h3>🔒 Анализ техники упражнений</h3>
+                <p>Доступен на тарифе "AI-помощник"</p>
+                <a href="/pricing" class="button">🚀 Повысить подписку</a>
+            </div>
+            {% endif %}
+            
+            <div class="card">
+                <h3>📜 История анализов</h3>
+                <p>Посмотрите динамику изменений</p>
+                <a href="/history" class="button">📊 Открыть историю</a>
+            </div>
+        </div>
+        
+        <div class="grid">
+            {% if user.subscription != 'free' %}
+            <div class="card">
+                <h3>📚 Библиотека упражнений</h3>
+                <p>Более 1500 упражнений с GIF-демонстрациями</p>
+                <a href="/exercises" class="button">🏋️ Открыть библиотеку</a>
+            </div>
+            {% else %}
+            <div class="card locked">
+                <h3>🔒 Библиотека упражнений</h3>
+                <p>Доступна на тарифе "AI-помощник"</p>
+                <a href="/pricing" class="button">🚀 Повысить подписку</a>
+            </div>
+            {% endif %}
+            
+            <div class="card">
+                <h3>📊 Ваши данные</h3>
+                <p>🎯 Цель: 
+                    {% if user.goal == 'lose' %}Похудение
+                    {% elif user.goal == 'gain' %}Набор массы
+                    {% elif user.goal == 'posture' %}Коррекция осанки
+                    {% else %}Подтянутое тело{% endif %}
+                </p>
+                <p>📏 Рост: {{ user.height }} см</p>
+                <p>⚖️ Вес: {{ user.weight }} кг</p>
+                <p>🎂 Возраст: {{ user.age }} лет</p>
+                <p>⭐ Роль: {% if user.role == 'trainer' %}Тренер{% else %}Клиент{% endif %}</p>
+            </div>
+            
+            <div class="card">
+                <h3>🤖 AI-помощник</h3>
+                <p>Загрузите 3 фото (спереди, сзади, сбоку)</p>
+                <p>ИИ проанализирует вашу осанку и даст рекомендации</p>
+                <a href="/analyze" class="button">📸 Начать анализ</a>
+            </div>
         </div>
     </div>
     

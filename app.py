@@ -36,13 +36,31 @@ app.add_url_rule('/health', 'health', health_page, methods=['GET'])
 app.add_url_rule('/save_health', 'save_health', save_health, methods=['POST'])
 app.add_url_rule('/pricing', 'pricing', pricing_page)
 app.add_url_rule('/subscribe/<plan>', 'subscribe', subscribe)
-app.add_url_rule('/generate_workout', 'generate_workout', generate_workout_page, methods=['GET', 'POST'])
-app.add_url_rule('/generate_meal', 'generate_meal', generate_meal_page, methods=['GET', 'POST'])
-app.add_url_rule('/export/posture', 'export_posture', export_posture_csv)
-app.add_url_rule('/export/composition', 'export_composition', export_body_composition_csv)
+
+# Защищённые маршруты
+@app.route('/generate_workout', methods=['GET', 'POST'])
+@require_subscription('ai_assistant')
+def generate_workout():
+    return generate_workout_page()
+
+@app.route('/generate_meal', methods=['GET', 'POST'])
+@require_subscription('ai_assistant')
+def generate_meal():
+    return generate_meal_page()
+
+@app.route('/export/posture', methods=['GET'])
+@require_subscription('ai_assistant')
+def export_posture():
+    return export_posture_csv()
+
+@app.route('/export/composition', methods=['GET'])
+@require_subscription('ai_assistant')
+def export_composition():
+    return export_body_composition_csv()
 
 # Анализ видео
 @app.route('/analyze_video', methods=['POST'])
+@require_subscription('ai_assistant')
 def analyze_video():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -86,10 +104,12 @@ def analyze_video():
             os.remove(temp_path)
 
 @app.route('/analyze_video_page')
+@require_subscription('ai_assistant')
 def analyze_video_page():
     return render_template('analyze_video.html')
 
 @app.route('/exercise_history')
+@require_subscription('ai_assistant')
 def exercise_history():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -120,6 +140,7 @@ def exercise_history():
 
 # Страница библиотеки упражнений
 @app.route('/exercises')
+@require_subscription('ai_assistant')
 def exercises_page():
     from exercise_manager import exercise_manager
     exercises = exercise_manager.get_all_with_media()
@@ -260,9 +281,6 @@ def home_post():
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     return send_from_directory('uploads', filename)
-
-if __name__ == '__main__':
-    app.run(debug=True)
 
 if __name__ == '__main__':
     app.run(debug=True)

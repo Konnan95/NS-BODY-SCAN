@@ -3,7 +3,7 @@
 """
 
 from flask import request, redirect, url_for, session, flash, render_template, jsonify
-from database import get_user_by_id, save_posture_analysis, save_body_composition, save_workout_program, save_meal_plan
+from database import get_user_by_id, save_posture_analysis, save_body_composition, save_workout_program, save_meal_plan, get_db_connection
 from posture_analyzer import analyze_posture, save_analyzed_photo, save_original_photo
 from config import UPLOAD_FOLDER
 import os
@@ -14,32 +14,8 @@ from pdf_generator import generate_pdf_report
 from body_fat_predictor_sklearn import body_fat_predictor
 from bodypix_analyzer import bodypix
 from exercise_translations import translate_exercise_name
-from video_analyzer_mediapipe import video_analyzer
 from decorators import get_user_limit
 from datetime import datetime
-from database import get_db_connection
-
-def can_analyze(user_id):
-    """Проверяет, может ли пользователь выполнить анализ"""
-    limits = get_user_limit(user_id)
-    
-    if limits['posture_analyses_per_month'] == 999:
-        return True, None
-    
-    # Считаем анализы за месяц
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT COUNT(*) FROM posture_analyses 
-        WHERE user_id = %s AND created_at > date_trunc('month', CURRENT_DATE)
-    """, (user_id,))
-    count = cur.fetchone()[0]
-    conn.close()
-    
-    if count >= limits['posture_analyses_per_month']:
-        return False, f"Достигнут лимит: {limits['posture_analyses_per_month']} анализ в месяц. Повысьте подписку!"
-    
-    return True, None
 
 
 def extract_exercises_from_text(text):
@@ -64,12 +40,7 @@ def extract_exercises_from_text(text):
             in_table = False
     return exercises
 
-    if request.method == 'POST':
-        # Проверяем лимиты
-        can, msg = can_analyze(session['user_id'])
-        if not can:
-            flash(msg, 'danger')
-            return redirect(url_for('pricing'))
+
 def analyze_page():
     """Страница анализа осанки"""
     if 'user_id' not in session:
@@ -81,6 +52,23 @@ def analyze_page():
         return redirect(url_for('login'))
     
     if request.method == 'POST':
+        # Проверка лимитов для бесплатного тарифа
+        limits = get_user_limit(session['user_id'])
+        
+        if limits['posture_analyses_per_month'] == 1:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT COUNT(*) FROM posture_analyses 
+                WHERE user_id = %s AND created_at > date_trunc('month', CURRENT_DATE)
+            """, (session['user_id'],))
+            count = cur.fetchone()[0]
+            conn.close()
+            
+            if count >= 1:
+                flash('🔒 Достигнут лимит: 1 анализ в месяц. Повысьте подписку!', 'danger')
+                return redirect(url_for('pricing'))
+        
         results = []
         views = {'front': 'Спереди', 'back': 'Сзади', 'side': 'Сбоку'}
         
@@ -225,8 +213,9 @@ def analyze_page():
             else:
                 print("⚠️ BodyPix анализ не удался")
         
-        # Генерация плана тренировок
-        workout_prompt = f"""
+        # Генерация плана тренировок (только для платных)
+        if limits['has_ai_plans']:
+            workout_prompt = f"""
 Составь план тренировок для человека:
 - Пол: женщина
 - Возраст: {age}
@@ -236,53 +225,59 @@ def analyze_page():
 - Нарушения осанки: плечи {avg_shoulder:.1f}°, таз {avg_hip:.1f}°, голова {avg_head:.1f}°
 Напиши 3 тренировки на неделю (пн, ср, пт). Для каждого упражнения укажи подходы и повторения.
 """
-        workout_plan_text = ask_gigachat(workout_prompt)
+            workout_plan_text = ask_gigachat(workout_prompt)
+            
+            # Сохраняем программу тренировок в БД
+            save_workout_program(
+                user_id=user['id'],
+                program_data=workout_plan_text,
+                days_per_week=3,
+                is_active=True
+            )
+            print(f"✅ Программа тренировок сохранена для user {user['id']}")
+            
+            # Извлекаем упражнения
+            extracted_exercises = extract_exercises_from_text(workout_plan_text)
+            
+            # Добавляем GIF для упражнений
+            exercises_with_media = []
+            for ex in extracted_exercises[:12]:
+                name = ex['name'].lower()
+                english_name = translate_exercise_name(name)
+                search_name = english_name if english_name else name
+                media = get_exercise_media(search_name)
+                instructions = get_exercise_instructions(search_name)
+                muscles = get_exercise_target_muscles(search_name)
+                exercises_with_media.append({
+                    'name': ex['name'],
+                    'media': media,
+                    'instructions': instructions[:2] if instructions else [],
+                    'target_muscles': muscles[:3] if muscles else []
+                })
+        else:
+            workout_plan_text = "🔒 AI-планы тренировок доступны на тарифе 'AI-помощник'. Повысьте подписку!"
+            exercises_with_media = []
         
-        # Сохраняем программу тренировок в БД
-        save_workout_program(
-            user_id=user['id'],
-            program_data=workout_plan_text,
-            days_per_week=3,
-            is_active=True
-        )
-        print(f"✅ Программа тренировок сохранена для user {user['id']}")
-        
-        # Извлекаем упражнения
-        extracted_exercises = extract_exercises_from_text(workout_plan_text)
-        
-        # Добавляем GIF для упражнений
-        exercises_with_media = []
-        for ex in extracted_exercises[:12]:
-            name = ex['name'].lower()
-            english_name = translate_exercise_name(name)
-            search_name = english_name if english_name else name
-            media = get_exercise_media(search_name)
-            instructions = get_exercise_instructions(search_name)
-            muscles = get_exercise_target_muscles(search_name)
-            exercises_with_media.append({
-                'name': ex['name'],
-                'media': media,
-                'instructions': instructions[:2] if instructions else [],
-                'target_muscles': muscles[:3] if muscles else []
-            })
-        
-        # Генерация плана питания
-        meal_prompt = f"""
+        # Генерация плана питания (только для платных)
+        if limits['has_ai_plans']:
+            meal_prompt = f"""
 Составь примерный план питания на день для человека:
 - Цель: {goal}
 - Калории: {calories:.0f} ккал
 - Белки: {protein:.0f} г, жиры: {fat:.0f} г, углеводы: {carbs:.0f} г
 Напиши план на день с граммовками продуктов.
 """
-        meal_plan = ask_gigachat(meal_prompt)
-        
-        # Сохраняем план питания в БД
-        save_meal_plan(
-            user_id=user['id'],
-            plan_data=meal_plan,
-            is_active=True
-        )
-        print(f"✅ План питания сохранён для user {user['id']}")
+            meal_plan = ask_gigachat(meal_prompt)
+            
+            # Сохраняем план питания в БД
+            save_meal_plan(
+                user_id=user['id'],
+                plan_data=meal_plan,
+                is_active=True
+            )
+            print(f"✅ План питания сохранён для user {user['id']}")
+        else:
+            meal_plan = "🔒 AI-планы питания доступны на тарифе 'AI-помощник'. Повысьте подписку!"
         
         # Генерация PDF-отчёта
         pdf_url = generate_pdf_report(user, 
