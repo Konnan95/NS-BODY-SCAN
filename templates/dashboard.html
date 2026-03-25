@@ -268,52 +268,62 @@
         {% endif %}
         
         <div class="grid">
-            <div class="card">
-                <h3>🔍 Анализ осанки</h3>
-                <p>Загрузите фото для AI-анализа осанки</p>
-                <a href="/analyze" class="button">📸 Пройти анализ</a>
-            </div>
-            
-            <div class="card">
-                <h3>🎥 Анализ техники упражнений</h3>
-                <p>Загрузите видео выполнения упражнения. YOLO AI оценит вашу технику</p>
-                <a href="/analyze_video_page" class="button">🎬 Проанализировать</a>
-            </div>
-            
-            <div class="card">
-                <h3>📜 История анализов</h3>
-                <p>Посмотрите динамику изменений</p>
-                <a href="/history" class="button">📊 Открыть историю</a>
-            </div>
-            
-            <div class="card">
-                <h3>📚 Библиотека упражнений</h3>
-                <p>Более 1500 упражнений с GIF-демонстрациями</p>
-                <a href="/exercises" class="button">🏋️ Открыть библиотеку</a>
-            </div>
-        </div>
-        
-        <div class="grid">
-            <div class="card">
-                <h3>📊 Ваши данные</h3>
-                <p>🎯 Цель: 
-                    {% if user.goal == 'lose' %}Похудение
-                    {% elif user.goal == 'gain' %}Набор массы
-                    {% elif user.goal == 'posture' %}Коррекция осанки
-                    {% else %}Подтянутое тело{% endif %}
-                </p>
-                <p>📏 Рост: {{ user.height }} см</p>
-                <p>⚖️ Вес: {{ user.weight }} кг</p>
-                <p>🎂 Возраст: {{ user.age }} лет</p>
-                <p>⭐ Роль: {% if user.role == 'trainer' %}Тренер{% else %}Клиент{% endif %}</p>
-            </div>
-            <div class="card">
-                <h3>🤖 AI-помощник</h3>
-                <p>Загрузите 3 фото (спереди, сзади, сбоку)</p>
-                <p>ИИ проанализирует вашу осанку и даст рекомендации</p>
-                <a href="/analyze" class="button">📸 Начать анализ</a>
-            </div>
-            <div class="card">
+    <div class="card">
+        <h3>🔍 Анализ осанки</h3>
+        <p>Загрузите фото для AI-анализа осанки</p>
+        <a href="/analyze" class="button">📸 Пройти анализ</a>
+    </div>
+    
+    <div class="card">
+        <h3>🎥 Анализ техники упражнений</h3>
+        <p>Загрузите видео выполнения упражнения. AI оценит вашу технику</p>
+        <a href="/analyze_video_page" class="button">🎬 Проанализировать</a>
+    </div>
+    
+    <div class="card">
+        <h3>📜 История анализов</h3>
+        <p>Посмотрите динамику изменений</p>
+        <a href="/history" class="button">📊 Открыть историю</a>
+    </div>
+</div>
+
+<div class="grid">
+    <!-- Библиотека упражнений с проверкой подписки -->
+    {% if user.subscription != 'free' %}
+    <div class="card">
+        <h3>📚 Библиотека упражнений</h3>
+        <p>Более 1500 упражнений с GIF-демонстрациями</p>
+        <a href="/exercises" class="button">🏋️ Открыть библиотеку</a>
+    </div>
+    {% else %}
+    <div class="card" style="background: #fff3cd;">
+        <h3>🔒 Библиотека упражнений</h3>
+        <p>Доступна на тарифе "AI-помощник"</p>
+        <a href="/pricing" class="button">🚀 Повысить подписку</a>
+    </div>
+    {% endif %}
+    
+    <div class="card">
+        <h3>📊 Ваши данные</h3>
+        <p>🎯 Цель: 
+            {% if user.goal == 'lose' %}Похудение
+            {% elif user.goal == 'gain' %}Набор массы
+            {% elif user.goal == 'posture' %}Коррекция осанки
+            {% else %}Подтянутое тело{% endif %}
+        </p>
+        <p>📏 Рост: {{ user.height }} см</p>
+        <p>⚖️ Вес: {{ user.weight }} кг</p>
+        <p>🎂 Возраст: {{ user.age }} лет</p>
+        <p>⭐ Роль: {% if user.role == 'trainer' %}Тренер{% else %}Клиент{% endif %}</p>
+    </div>
+    
+    <div class="card">
+        <h3>🤖 AI-помощник</h3>
+        <p>Загрузите 3 фото (спереди, сзади, сбоку)</p>
+        <p>ИИ проанализирует вашу осанку и даст рекомендации</p>
+        <a href="/analyze" class="button">📸 Начать анализ</a>
+    </div>
+</div>
     <h3>📊 История анализов техники</h3>
     <p>Посмотрите предыдущие результаты</p>
     <a href="/exercise_history" class="button">📋 Открыть историю</a>

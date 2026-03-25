@@ -12,6 +12,7 @@ from generate_workout import generate_workout_page
 from generate_meal import generate_meal_page
 from export_routes import export_posture_csv, export_body_composition_csv
 from video_analyzer_mediapipe import video_analyzer
+from decorators import require_subscription
 import os
 
 app = Flask(__name__)
@@ -123,7 +124,6 @@ def exercises_page():
     from exercise_manager import exercise_manager
     exercises = exercise_manager.get_all_with_media()
     
-    # Добавляем поле media для каждого упражнения
     for ex in exercises:
         gif_name = ex.get('gifUrl', '').split('/')[-1]
         if gif_name:
@@ -260,6 +260,9 @@ def home_post():
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     return send_from_directory('uploads', filename)
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 if __name__ == '__main__':
     app.run(debug=True)

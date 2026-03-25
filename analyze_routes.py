@@ -15,6 +15,31 @@ from body_fat_predictor_sklearn import body_fat_predictor
 from bodypix_analyzer import bodypix
 from exercise_translations import translate_exercise_name
 from video_analyzer_mediapipe import video_analyzer
+from decorators import get_user_limit
+from datetime import datetime
+from database import get_db_connection
+
+def can_analyze(user_id):
+    """Проверяет, может ли пользователь выполнить анализ"""
+    limits = get_user_limit(user_id)
+    
+    if limits['posture_analyses_per_month'] == 999:
+        return True, None
+    
+    # Считаем анализы за месяц
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT COUNT(*) FROM posture_analyses 
+        WHERE user_id = %s AND created_at > date_trunc('month', CURRENT_DATE)
+    """, (user_id,))
+    count = cur.fetchone()[0]
+    conn.close()
+    
+    if count >= limits['posture_analyses_per_month']:
+        return False, f"Достигнут лимит: {limits['posture_analyses_per_month']} анализ в месяц. Повысьте подписку!"
+    
+    return True, None
 
 
 def extract_exercises_from_text(text):
@@ -39,7 +64,12 @@ def extract_exercises_from_text(text):
             in_table = False
     return exercises
 
-
+    if request.method == 'POST':
+        # Проверяем лимиты
+        can, msg = can_analyze(session['user_id'])
+        if not can:
+            flash(msg, 'danger')
+            return redirect(url_for('pricing'))
 def analyze_page():
     """Страница анализа осанки"""
     if 'user_id' not in session:
