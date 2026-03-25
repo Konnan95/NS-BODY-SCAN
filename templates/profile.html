@@ -4,9 +4,9 @@
     <title>Профиль - NS Body Scan</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); min-height: 100vh; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
         h1 { color: #ff66b5; }
-        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
         button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 12px; border-radius: 25px; cursor: pointer; width: 100%; }
         .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
         .flash { padding: 10px; margin: 10px 0; border-radius: 5px; }
@@ -17,6 +17,7 @@
         .subscription-card { background: #f0f0f0; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: center; }
         .subscription-badge { font-size: 18px; font-weight: bold; color: #ff66b5; }
         .change-link { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 8px 15px; border-radius: 20px; text-decoration: none; display: inline-block; margin-top: 10px; font-size: 14px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     </style>
 </head>
 <body>
@@ -24,13 +25,13 @@
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
             <h1>🧠 NS Body Scan</h1>
             <div class="menu">
-                <a href="/dashboard">Главная</a>
-                <a href="/profile">Профиль</a>
-                <a href="/analyze">Анализ</a>
-                <a href="/history">История</a>
-                <a href="/health">Шаги/Сон</a>
-                <a href="/pricing">Тарифы</a>
-                <a href="/logout">Выйти</a>
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/profile">👤 Профиль</a>
+                <a href="/analyze">🔍 Анализ</a>
+                <a href="/history">📜 История</a>
+                <a href="/health">🏃‍♀️ Шаги/Сон</a>
+                <a href="/pricing">💰 Тарифы</a>
+                <a href="/logout">🚪 Выйти</a>
             </div>
         </div>
         
@@ -40,7 +41,7 @@
             {% endfor %}
         {% endwith %}
         
-        <h2>Редактирование профиля</h2>
+        <h2>✏️ Редактирование профиля</h2>
         
         <!-- Блок подписки -->
         <div class="subscription-card">
@@ -134,6 +135,51 @@
                 <option value="mesomorph" {% if user.body_type == 'mesomorph' %}selected{% endif %}>Мезоморф (атлетичный)</option>
                 <option value="endomorph" {% if user.body_type == 'endomorph' %}selected{% endif %}>Эндоморф (склонность к полноте)</option>
             </select>
+            
+            <hr>
+            <div class="section-title">📏 Антропометрические данные (для точного расчёта состава тела)</div>
+            <div class="grid-2">
+                <div>
+                    <label>Обхват шеи (см)</label>
+                    <input type="number" step="0.1" name="neck" value="{{ user.neck or '' }}" placeholder="35">
+                </div>
+                <div>
+                    <label>Обхват груди (см)</label>
+                    <input type="number" step="0.1" name="chest" value="{{ user.chest or '' }}" placeholder="90">
+                </div>
+                <div>
+                    <label>Обхват талии (см)</label>
+                    <input type="number" step="0.1" name="waist" value="{{ user.waist or '' }}" placeholder="80">
+                </div>
+                <div>
+                    <label>Обхват бёдер (см)</label>
+                    <input type="number" step="0.1" name="hip" value="{{ user.hip or '' }}" placeholder="95">
+                </div>
+                <div>
+                    <label>Обхват бедра (см)</label>
+                    <input type="number" step="0.1" name="thigh" value="{{ user.thigh or '' }}" placeholder="55">
+                </div>
+                <div>
+                    <label>Обхват колена (см)</label>
+                    <input type="number" step="0.1" name="knee" value="{{ user.knee or '' }}" placeholder="38">
+                </div>
+                <div>
+                    <label>Обхват щиколотки (см)</label>
+                    <input type="number" step="0.1" name="ankle" value="{{ user.ankle or '' }}" placeholder="23">
+                </div>
+                <div>
+                    <label>Обхват бицепса (см)</label>
+                    <input type="number" step="0.1" name="biceps" value="{{ user.biceps or '' }}" placeholder="30">
+                </div>
+                <div>
+                    <label>Обхват предплечья (см)</label>
+                    <input type="number" step="0.1" name="forearm" value="{{ user.forearm or '' }}" placeholder="25">
+                </div>
+                <div>
+                    <label>Обхват запястья (см)</label>
+                    <input type="number" step="0.1" name="wrist" value="{{ user.wrist or '' }}" placeholder="17">
+                </div>
+            </div>
             
             <button type="submit">💾 Сохранить изменения</button>
         </form>

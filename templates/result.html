@@ -4,7 +4,7 @@
     <title>Результат - NS Body Scan</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); min-height: 100vh; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
         h1, h2 { color: #ff66b5; }
         .card { background: #f8f9fa; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 4px solid #ff66b5; }
         .score { font-size: 24px; font-weight: bold; color: #ff66b5; }
@@ -78,6 +78,25 @@
             text-decoration: none;
             margin-left: 10px;
         }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .bodypix-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .bodypix-card h3 {
+            color: white;
+        }
+        .recommendation-text {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -96,35 +115,35 @@
         </div>
         
         <!-- Фото с разметкой (три ракурса) -->
-<div class="card">
-    <h3>📸 Визуализация анализа осанки</h3>
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
-        {% if front_photo_path %}
-        <div class="photo-container">
-            <img src="/{{ front_photo_path }}" alt="Спереди" onclick="window.open(this.src)">
-            <div class="photo-caption">👤 Спереди</div>
+        <div class="card">
+            <h3>📸 Визуализация анализа осанки</h3>
+            <div class="grid-3">
+                {% if front_photo_path and front_photo_path != 'None' %}
+                <div class="photo-container">
+                    <img src="/{{ front_photo_path }}" alt="Спереди" onclick="window.open(this.src)">
+                    <div class="photo-caption">👤 Спереди</div>
+                </div>
+                {% endif %}
+                {% if side_photo_path and side_photo_path != 'None' %}
+                <div class="photo-container">
+                    <img src="/{{ side_photo_path }}" alt="Сбоку" onclick="window.open(this.src)">
+                    <div class="photo-caption">↔️ Сбоку</div>
+                </div>
+                {% endif %}
+                {% if analyzed_photo_path and analyzed_photo_path != 'None' %}
+                <div class="photo-container">
+                    <img src="/{{ analyzed_photo_path }}" alt="Сзади" onclick="window.open(this.src)">
+                    <div class="photo-caption">🔙 Сзади</div>
+                </div>
+                {% endif %}
+            </div>
+            <p style="text-align: center; font-size: 12px; color: #666; margin-top: 10px;">
+                📌 На фото отмечены 33 ключевые точки (MediaPipe Pose)
+            </p>
         </div>
-        {% endif %}
-        {% if side_photo_path %}
-        <div class="photo-container">
-            <img src="/{{ side_photo_path }}" alt="Сбоку" onclick="window.open(this.src)">
-            <div class="photo-caption">↔️ Сбоку</div>
-        </div>
-        {% endif %}
-        {% if analyzed_photo_path %}
-        <div class="photo-container">
-            <img src="/{{ analyzed_photo_path }}" alt="Сзади" onclick="window.open(this.src)">
-            <div class="photo-caption">🔙 Сзади</div>
-        </div>
-        {% endif %}
-    </div>
-    <p style="text-align: center; font-size: 12px; color: #666; margin-top: 10px;">
-        📌 На фото отмечены 33 ключевые точки (MediaPipe Pose)
-    </p>
-</div>
         
         <div class="card">
-            <h2>📊 Результаты анализа</h2>
+            <h2>📊 Результаты анализа осанки</h2>
             <p>📐 <strong>Наклон плеч:</strong> {{ shoulder }}%</p>
             <p>📐 <strong>Наклон таза:</strong> {{ hip }}%</p>
             <p>📐 <strong>Наклон головы:</strong> {{ head }}°</p>
@@ -142,11 +161,55 @@
         
         <div class="card">
             <h3>🧬 Анализ состава тела</h3>
-            <p>🔥 <strong>% жира:</strong> {{ body_fat }}% (норма 18-28%)</p>
-            <p>💪 <strong>Мышечная масса:</strong> {{ muscle_mass }} кг</p>
+            <p>🔥 <strong>% жира:</strong> {{ body_fat }}% 
+                {% if body_fat < 18 %}
+                    <span style="color: #28a745;">⬇️ ниже нормы (18-28%)</span>
+                {% elif body_fat > 28 %}
+                    <span style="color: #dc3545;">⬆️ выше нормы (18-28%)</span>
+                {% else %}
+                    <span style="color: #28a745;">✅ норма (18-28%)</span>
+                {% endif %}
+            </p>
+            <p>💪 <strong>Мышечная масса:</strong> {{ muscle_mass }} кг 
+                <span style="font-size: 12px; color: #666;">(рекомендуется 45-60% от веса)</span>
+            </p>
             <p>💧 <strong>Вода:</strong> {{ water }} кг</p>
-            <p>⚠️ <strong>Висцеральный жир:</strong> {{ visceral_fat }} (уровень)</p>
+            <p>⚠️ <strong>Висцеральный жир:</strong> {{ visceral_fat }} 
+                {% if visceral_fat > 10 %}
+                    <span style="color: #dc3545;">⚠️ высокий риск</span>
+                {% elif visceral_fat > 5 %}
+                    <span style="color: #ffc107;">⚠️ средний риск</span>
+                {% else %}
+                    <span style="color: #28a745;">✅ норма</span>
+                {% endif %}
+            </p>
         </div>
+        
+        <!-- BodyPix анализ пропорций -->
+        {% if bodypix_result and bodypix_result.success %}
+        <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <h3 style="color: white;">📏 Анализ пропорций тела (BodyPix)</h3>
+            <p>📐 <strong>Тип фигуры:</strong> {{ bodypix_result.body_type }}</p>
+            <p>📏 <strong>Соотношение плечи/талия:</strong> {{ bodypix_result.ratio_shoulder_waist }}</p>
+            <p>📏 <strong>Соотношение бёдра/талия:</strong> {{ bodypix_result.ratio_hip_waist }}</p>
+            <div class="recommendation-text">
+                <p style="margin: 0; font-size: 14px;">
+                    💡 <strong>Рекомендация:</strong><br>
+                    {% if bodypix_result.body_type == 'Песочные часы' %}
+                    Ваша фигура сбалансирована. Поддерживайте форму с помощью кардио и силовых тренировок.
+                    {% elif bodypix_result.body_type == 'Груша' %}
+                    Акцент на верхнюю часть тела: отжимания, жимы, тяги. Кардио для ног.
+                    {% elif bodypix_result.body_type == 'Перевёрнутый треугольник' %}
+                    Акцент на нижнюю часть тела: приседания, выпады, ягодичный мостик.
+                    {% elif bodypix_result.body_type == 'Прямоугольник' %}
+                    Работайте над созданием рельефа: комплексные тренировки всего тела.
+                    {% else %}
+                    Регулярные тренировки для поддержания формы.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        {% endif %}
         
         <div class="card">
             <h3>🏋️ AI-план тренировок</h3>
@@ -211,6 +274,12 @@
                 <button>📄 Скачать PDF-отчёт</button>
             </a>
             {% endif %}
+            <a href="/generate_workout">
+                <button>🏋️ Сгенерировать новую программу</button>
+            </a>
+            <a href="/generate_meal">
+                <button>🥗 Сгенерировать новый план питания</button>
+            </a>
             <a href="/analyze">
                 <button>📸 Пройти анализ снова</button>
             </a>

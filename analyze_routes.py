@@ -11,6 +11,8 @@ from giga_helper import ask_gigachat
 from local_exercises import get_exercise_media, get_exercise_instructions, get_exercise_target_muscles
 import re
 from pdf_generator import generate_pdf_report
+from body_fat_predictor_sklearn import body_fat_predictor
+from bodypix_analyzer import bodypix
 from exercise_translations import translate_exercise_name
 
 
@@ -145,15 +147,52 @@ def analyze_page():
         if calories < 1500:
             calories = 1500
         
-        # Расчёт состава тела
-        bmi = weight / ((height/100) ** 2)
-        body_fat = (1.20 * bmi) + (0.23 * age) - 5.4
-        muscle_mass = weight * (100 - body_fat) / 100 * 0.45
-        water = weight * 0.6
-        visceral_fat = max(1, min(30, int((bmi - 18.5) * 2)))
+        # Расчёт состава тела (ML модель Random Forest)
+        measurements = {
+            'neck': user.get('neck', 35),
+            'waist': user.get('waist', 80),
+            'hip': user.get('hip', 95),
+            'height': height,
+            'weight': weight,
+            'age': age
+        }
+        
+        result = body_fat_predictor.predict(measurements)
+        
+        if result:
+            body_fat = result['body_fat']
+            muscle_mass = result['muscle_mass']
+            visceral_fat = result['visceral_fat']
+            water = weight * 0.6
+            print(f"🧬 ML-анализ: {result}")
+            if 'details' in result:
+                print(f"   📊 Детали: US Navy={result['details']['US Navy']}%, YMCA={result['details']['YMCA']}%, BMI={result['details']['BMI']}%")
+        else:
+            # Запасной вариант (формулы)
+            bmi = weight / ((height/100) ** 2)
+            body_fat = (1.20 * bmi) + (0.23 * age) - 5.4
+            muscle_mass = weight * (100 - body_fat) / 100 * 0.45
+            water = weight * 0.6
+            visceral_fat = max(1, min(30, int((bmi - 18.5) * 2)))
+            print("⚠️ Использую формулы")
         
         # Сохраняем состав тела
         save_body_composition(user['id'], body_fat, muscle_mass, water, visceral_fat)
+        
+        # BodyPix анализ пропорций тела
+        bodypix_result = None
+        first_photo = None
+        for r in results:
+            if r.get('original_path'):
+                first_photo = r['original_path']
+                break
+        
+        if first_photo:
+            bodypix_result = bodypix.analyze_from_image(first_photo)
+            if bodypix_result and bodypix_result.get('success'):
+                print(f"📊 BodyPix анализ: {bodypix_result['body_type']}, плечи/талия={bodypix_result['ratio_shoulder_waist']}, бёдра/талия={bodypix_result['ratio_hip_waist']}")
+            else:
+                print("⚠️ BodyPix анализ не удался")
         
         # Генерация плана тренировок
         workout_prompt = f"""
@@ -205,8 +244,8 @@ def analyze_page():
 Напиши план на день с граммовками продуктов.
 """
         meal_plan = ask_gigachat(meal_prompt)
+        
         # Сохраняем план питания в БД
-        from database import save_meal_plan
         save_meal_plan(
             user_id=user['id'],
             plan_data=meal_plan,
@@ -248,7 +287,8 @@ def analyze_page():
             pdf_url=pdf_url,
             analyzed_photo_path=photo_paths['back'],
             front_photo_path=photo_paths['front'],
-            side_photo_path=photo_paths['side']
+            side_photo_path=photo_paths['side'],
+            bodypix_result=bodypix_result
         )
     
     return render_template('analyze.html', user=user)

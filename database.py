@@ -11,7 +11,9 @@ def create_user(username, password, name, age, height, weight, goal, activity, r
                 problem_zones=None, allergies=None, preferences=None,
                 wake_time=None, sleep_time=None,
                 body_type=None, meals_per_day=None, eating_schedule=None,
-                favorite_foods=None, disliked_foods=None, food_budget=None):
+                favorite_foods=None, disliked_foods=None, food_budget=None,
+                neck=None, chest=None, waist=None, hip=None, thigh=None,
+                knee=None, ankle=None, biceps=None, forearm=None, wrist=None):
     """Создать нового пользователя"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -21,14 +23,15 @@ def create_user(username, password, name, age, height, weight, goal, activity, r
                            equipment, injuries, chronic_diseases, problem_zones, allergies,
                            preferences, wake_time, sleep_time,
                            body_type, meals_per_day, eating_schedule,
-                           favorite_foods, disliked_foods, food_budget)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        RETURNING id
+                           favorite_foods, disliked_foods, food_budget,
+                           neck, chest, waist, hip, thigh, knee, ankle, biceps, forearm, wrist)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """, (username, hashed, name, age, height, weight, goal, activity, role, subscription,
           equipment, injuries, chronic_diseases, problem_zones, allergies,
           preferences, wake_time, sleep_time,
           body_type, meals_per_day, eating_schedule,
-          favorite_foods, disliked_foods, food_budget))
+          favorite_foods, disliked_foods, food_budget,
+          neck, chest, waist, hip, thigh, knee, ankle, biceps, forearm, wrist))
     user_id = cur.fetchone()[0]
     conn.commit()
     conn.close()
@@ -79,7 +82,9 @@ def update_user_profile(user_id, name, age, height, weight, goal, activity,
                         problem_zones=None, allergies=None, preferences=None,
                         wake_time=None, sleep_time=None,
                         body_type=None, meals_per_day=None, eating_schedule=None,
-                        favorite_foods=None, disliked_foods=None, food_budget=None):
+                        favorite_foods=None, disliked_foods=None, food_budget=None,
+                        neck=None, chest=None, waist=None, hip=None, thigh=None,
+                        knee=None, ankle=None, biceps=None, forearm=None, wrist=None):
     """Обновить профиль пользователя"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -89,16 +94,18 @@ def update_user_profile(user_id, name, age, height, weight, goal, activity,
             equipment=%s, injuries=%s, chronic_diseases=%s, problem_zones=%s,
             allergies=%s, preferences=%s, wake_time=%s, sleep_time=%s,
             body_type=%s, meals_per_day=%s, eating_schedule=%s,
-            favorite_foods=%s, disliked_foods=%s, food_budget=%s
+            favorite_foods=%s, disliked_foods=%s, food_budget=%s,
+            neck=%s, chest=%s, waist=%s, hip=%s, thigh=%s, knee=%s, ankle=%s, biceps=%s, forearm=%s, wrist=%s
         WHERE id=%s
     """, (name, age, height, weight, goal, activity,
           equipment, injuries, chronic_diseases, problem_zones,
           allergies, preferences, wake_time, sleep_time,
           body_type, meals_per_day, eating_schedule,
-          favorite_foods, disliked_foods, food_budget, user_id))
+          favorite_foods, disliked_foods, food_budget,
+          neck, chest, waist, hip, thigh, knee, ankle, biceps, forearm, wrist,
+          user_id))
     conn.commit()
     conn.close()
-
 def save_posture_analysis(user_id, shoulder_slope, hip_slope, head_tilt, posture_score,
                           kyphosis=None, neck_angle=None, knee_valgus=None, symmetry=None,
                           original_photo_path=None, analyzed_photo_path=None,
@@ -124,13 +131,19 @@ def save_body_composition(user_id, body_fat, muscle_mass, water, visceral_fat):
     """Сохранить анализ состава тела"""
     conn = get_db_connection()
     cur = conn.cursor()
+    
+    # Конвертируем numpy типы в обычные Python
+    def to_python(val):
+        if hasattr(val, 'item'):
+            return val.item()
+        return val
+    
     cur.execute("""
         INSERT INTO body_composition (user_id, body_fat, muscle_mass, water, visceral_fat)
         VALUES (%s, %s, %s, %s, %s)
-    """, (user_id, body_fat, muscle_mass, water, visceral_fat))
+    """, (user_id, to_python(body_fat), to_python(muscle_mass), water, visceral_fat))
     conn.commit()
     conn.close()
-
 def save_daily_health(user_id, steps, sleep_hours, weight=None):
     """Сохранить данные о шагах и сне"""
     from datetime import date

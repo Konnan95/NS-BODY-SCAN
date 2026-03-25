@@ -54,5 +54,27 @@
             </div>
         </form>
     </div>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0/dist/body-pix.min.js"></script>
+<script>
+// BodyPix для анализа пропорций тела
+let bodyPixModel = null;
+
+async function loadBodyPix() {
+    bodyPixModel = await bodyPix.load();
+    console.log("✅ BodyPix загружен");
+}
+
+async function analyzeWithBodyPix(imageElement) {
+    if (!bodyPixModel) await loadBodyPix();
+    
+    const segmentation = await bodyPixModel.segmentPerson(imageElement);
+    // Здесь можно добавить анализ пропорций
+    return segmentation;
+}
+
+// Загружаем модель при старте
+loadBodyPix();
+</script>
 </body>
 </html>
