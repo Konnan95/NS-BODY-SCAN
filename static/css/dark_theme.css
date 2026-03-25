@@ -1,0 +1,82 @@
+/* Тёмная тема */
+body.dark-theme {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+body.dark-theme .container {
+    background: rgba(30, 30, 46, 0.95);
+    color: #e0e0e0;
+}
+
+body.dark-theme .card {
+    background: #2a2a3a;
+    border-left-color: #ff66b5;
+}
+
+body.dark-theme .card h3 {
+    color: #ff66b5;
+}
+
+body.dark-theme .menu a {
+    color: #ff66b5;
+}
+
+body.dark-theme .flash.success {
+    background: #1e3a2e;
+    color: #a5d6ff;
+}
+
+body.dark-theme .flash.danger {
+    background: #3a1e1e;
+    color: #ffb3b3;
+}
+
+body.dark-theme .metric {
+    color: #e0e0e0;
+}
+
+body.dark-theme .unit {
+    color: #aaa;
+}
+
+body.dark-theme input, 
+body.dark-theme select {
+    background: #3a3a4a;
+    color: #e0e0e0;
+    border-color: #555;
+}
+
+body.dark-theme .badge-free {
+    background: #444;
+    color: #ccc;
+}
+
+body.dark-theme .stats {
+    color: #aaa;
+}
+
+body.dark-theme table {
+    color: #e0e0e0;
+}
+
+body.dark-theme th {
+    background: #ff66b5;
+    color: white;
+}
+
+body.dark-theme td {
+    border-bottom-color: #444;
+}
+
+body.dark-theme .exercise-item {
+    background: #2a2a3a;
+}
+
+body.dark-theme .exercise-details {
+    color: #aaa;
+}
+
+body.dark-theme pre {
+    background: #1a1a2a;
+    color: #e0e0e0;
+}

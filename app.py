@@ -10,6 +10,7 @@ from health_routes import save_health, health_page
 from pricing import pricing_page, subscribe
 from generate_workout import generate_workout_page, generate_workout_api
 from generate_meal import generate_meal_page
+from export_routes import export_posture_csv, export_body_composition_csv
 import os
 
 app = Flask(__name__)
@@ -33,6 +34,8 @@ app.add_url_rule('/health', 'health', health_page, methods=['GET'])
 app.add_url_rule('/save_health', 'save_health', save_health, methods=['POST'])
 app.add_url_rule('/pricing', 'pricing', pricing_page)
 app.add_url_rule('/subscribe/<plan>', 'subscribe', subscribe)
+app.add_url_rule('/export/posture', 'export_posture', export_posture_csv)
+app.add_url_rule('/export/composition', 'export_composition', export_body_composition_csv)
 
 # Страница библиотеки упражнений
 @app.route('/exercises')

@@ -434,3 +434,47 @@ def log_user_activity(user_id, action, page=None, details=None):
         print(f"Log error: {e}")
     finally:
         conn.close()
+def get_previous_posture_analysis(user_id):
+    """Получить предыдущий анализ осанки (не последний)"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT shoulder_slope, hip_slope, head_tilt, posture_score, created_at
+        FROM posture_analyses
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+        LIMIT 1 OFFSET 1
+    """, (user_id,))
+    row = cur.fetchone()
+    conn.close()
+    if row:
+        return {
+            'shoulder': row[0],
+            'hip': row[1],
+            'head': row[2],
+            'score': row[3],
+            'date': row[4]
+        }
+    return None
+
+def get_previous_body_composition(user_id):
+    """Получить предыдущий анализ состава тела"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT body_fat, muscle_mass, visceral_fat, created_at
+        FROM body_composition
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+        LIMIT 1 OFFSET 1
+    """, (user_id,))
+    row = cur.fetchone()
+    conn.close()
+    if row:
+        return {
+            'body_fat': row[0],
+            'muscle_mass': row[1],
+            'visceral_fat': row[2],
+            'date': row[3]
+        }
+    return None
