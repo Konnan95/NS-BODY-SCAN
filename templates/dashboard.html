@@ -51,6 +51,7 @@
                 <a href="/history">📜 История</a>
                 <a href="/health">🏃‍♀️ Шаги/Сон</a>
                 <a href="/pricing">💰 Тарифы</a>
+                <a href="/analyze_video_page">🎥 Анализ техники</a>
                 <button onclick="toggleTheme()" class="theme-toggle">🌙</button>
                 <a href="/logout">🚪 Выйти</a>
             </div>
@@ -153,15 +154,15 @@
                     <th>Дата</th>
                     <th>Шаги</th>
                     <th>Сон (ч)</th>
-                </tr>
+                 </tr>
                 {% for day in last_week %}
-                <tr>
+                 <tr>
                     <td>{{ day.date }}</td>
                     <td>{{ day.steps }}</td>
                     <td>{{ day.sleep_hours }}</td>
-                </tr>
+                 </tr>
                 {% endfor %}
-            </table>
+             </table>
         </div>
         {% endif %}
         
@@ -217,6 +218,7 @@
             <p>📅 {{ workout_program.days_per_week }} тренировок в неделю</p>
             <pre>{{ workout_program.program_data }}</pre>
             <a href="/generate_workout" class="button">🔄 Сгенерировать новую программу</a>
+            <a href="/workout_history" class="button" style="background: #6c757d;">📜 История версий</a>
         </div>
         {% else %}
         <div class="card">
@@ -247,6 +249,12 @@
                 <h3>🔍 Анализ осанки</h3>
                 <p>Загрузите фото для AI-анализа осанки</p>
                 <a href="/analyze" class="button">📸 Пройти анализ</a>
+            </div>
+            
+            <div class="card">
+                <h3>🎥 Анализ техники упражнений</h3>
+                <p>Загрузите видео выполнения упражнения. YOLO AI оценит вашу технику</p>
+                <a href="/analyze_video_page" class="button">🎬 Проанализировать</a>
             </div>
             
             <div class="card">
@@ -282,6 +290,11 @@
                 <p>ИИ проанализирует вашу осанку и даст рекомендации</p>
                 <a href="/analyze" class="button">📸 Начать анализ</a>
             </div>
+            <div class="card">
+    <h3>📊 История анализов техники</h3>
+    <p>Посмотрите предыдущие результаты</p>
+    <a href="/exercise_history" class="button">📋 Открыть историю</a>
+</div>
         </div>
     </div>
     

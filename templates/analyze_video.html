@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Анализ техники упражнений - NS Body Scan</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
+        h1, h2 { color: #ff66b5; }
+        .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
+        .upload-area { border: 2px dashed #ff66b5; padding: 40px; text-align: center; margin: 20px 0; cursor: pointer; border-radius: 15px; transition: 0.2s; }
+        .upload-area:hover { background: rgba(255,102,181,0.1); }
+        select, input[type="file"] { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
+        button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        .result-card { background: #f8f9fa; padding: 20px; border-radius: 15px; margin-top: 20px; border-left: 4px solid #ff66b5; }
+        .score { font-size: 48px; font-weight: bold; color: #ff66b5; text-align: center; }
+        .feedback { background: #e9ecef; padding: 15px; border-radius: 10px; margin: 10px 0; }
+        .good { color: #28a745; }
+        .bad { color: #dc3545; }
+        .loading { text-align: center; padding: 40px; display: none; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #ff66b5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        select { cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <h1>🧠 NS Body Scan</h1>
+            <div class="menu">
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/profile">👤 Профиль</a>
+                <a href="/analyze">🔍 Анализ</a>
+                <a href="/history">📜 История</a>
+                <a href="/health">🏃‍♀️ Шаги/Сон</a>
+                <a href="/pricing">💰 Тарифы</a>
+                <a href="/logout">🚪 Выйти</a>
+            </div>
+        </div>
+        
+        <h2>🎥 Анализ техники упражнений</h2>
+        <p>Загрузите видео выполнения упражнения. AI проанализирует вашу технику и даст рекомендации.</p>
+        
+        <form method="post" enctype="multipart/form-data" id="analyzeForm">
+            <label>Выберите упражнение:</label>
+            <select name="exercise" required>
+                <option value="squat">🏋️ Приседания</option>
+                <option value="pushup">💪 Отжимания</option>
+                <option value="lunge">🦵 Выпады</option>
+                <option value="deadlift">🏋️‍♂️ Становая тяга</option>
+                <option value="plank">📏 Планка</option>
+                <option value="pullup">🤸 Подтягивания</option>
+                <option value="dip">💪 Отжимания на брусьях</option>
+                <option value="leg_raise">🦵 Подъём ног</option>
+            </select>
+            
+            <div class="upload-area" onclick="document.getElementById('video').click()">
+                📹 Нажмите или перетащите видео для анализа
+                <input type="file" id="video" name="video" accept="video/*" style="display: none;" required>
+                <div id="fileName" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+            </div>
+            
+            <button type="submit">🔍 Проанализировать технику</button>
+        </form>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px;">Анализируем видео... Это может занять несколько секунд</p>
+        </div>
+        
+        <div id="result" style="display: none;">
+            <div class="result-card">
+                <h3>📊 Результаты анализа</h3>
+                <div class="score" id="score"></div>
+                <div class="feedback" id="feedback"></div>
+            </div>
+        </div>
+        
+        <p style="margin-top: 20px; text-align: center;">
+            <a href="/exercise_history">📋 Посмотреть историю анализов</a>
+        </p>
+    </div>
+    
+    <script>
+        document.getElementById('video').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || '';
+            document.getElementById('fileName').innerHTML = `📹 ${fileName}`;
+        });
+        
+        document.getElementById('analyzeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const loading = document.getElementById('loading');
+            const resultDiv = document.getElementById('result');
+            
+            loading.style.display = 'block';
+            resultDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/analyze_video', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                loading.style.display = 'none';
+                
+                if (data.success) {
+                    document.getElementById('score').innerHTML = `${data.avg_score}/100`;
+                    
+                    let feedbackHtml = '<strong>📝 Рекомендации:</strong><ul>';
+                    if (data.feedback && data.feedback.length) {
+                        data.feedback.forEach(f => {
+                            const isGood = f.includes('✅') || f.includes('Отлично');
+                            feedbackHtml += `<li class="${isGood ? 'good' : 'bad'}">${f}</li>`;
+                        });
+                    }
+                    feedbackHtml += '</ul>';
+                    document.getElementById('feedback').innerHTML = feedbackHtml;
+                    
+                    resultDiv.style.display = 'block';
+                } else {
+                    alert('Ошибка: ' + (data.error || 'Не удалось проанализировать видео'));
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                alert('Ошибка при анализе: ' + error);
+            }
+        });
+    </script>
+</body>
+</html>

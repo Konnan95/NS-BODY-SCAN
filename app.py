@@ -1,4 +1,4 @@
-from flask import Flask, session, render_template, redirect, url_for, send_from_directory
+from flask import Flask, session, render_template, redirect, url_for, send_from_directory, jsonify, request
 from config import SECRET_KEY, UPLOAD_PATH
 from auth import register_user, login_user, logout_user
 from dashboard import dashboard_page
@@ -8,9 +8,10 @@ from api_exercises import exercises_bp
 from history_routes import history_page
 from health_routes import save_health, health_page
 from pricing import pricing_page, subscribe
-from generate_workout import generate_workout_page, generate_workout_api
+from generate_workout import generate_workout_page
 from generate_meal import generate_meal_page
 from export_routes import export_posture_csv, export_body_composition_csv
+from video_analyzer_mediapipe import video_analyzer
 import os
 
 app = Flask(__name__)
@@ -34,6 +35,8 @@ app.add_url_rule('/health', 'health', health_page, methods=['GET'])
 app.add_url_rule('/save_health', 'save_health', save_health, methods=['POST'])
 app.add_url_rule('/pricing', 'pricing', pricing_page)
 app.add_url_rule('/subscribe/<plan>', 'subscribe', subscribe)
+app.add_url_rule('/generate_workout', 'generate_workout', generate_workout_page, methods=['GET', 'POST'])
+app.add_url_rule('/generate_meal', 'generate_meal', generate_meal_page, methods=['GET', 'POST'])
 app.add_url_rule('/export/posture', 'export_posture', export_posture_csv)
 app.add_url_rule('/export/composition', 'export_composition', export_body_composition_csv)
 
@@ -42,24 +45,84 @@ app.add_url_rule('/export/composition', 'export_composition', export_body_compos
 def exercises_page():
     from exercise_manager import exercise_manager
     exercises = exercise_manager.get_all_with_media()
-    
-    # Добавляем поле media для каждого упражнения
-    for ex in exercises:
-        gif_name = ex.get('gifUrl', '').split('/')[-1]
-        if gif_name:
-            ex['media'] = {
-                'type': 'gif',
-                'url': f'/static/media/{gif_name}'
-            }
-        else:
-            ex['media'] = None
-        print(f"Упражнение: {ex.get('name')}, gif: {gif_name}")  # Отладка
-    
     return render_template('exercises.html', exercises=exercises)
-# Тестовый маршрут
-@app.route('/test')
-def test():
-    return "<h1>Flask работает!</h1><p>Это прямой HTML без шаблона</p>"
+
+# Анализ видео
+@app.route('/analyze_video', methods=['POST'])
+def analyze_video():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    if 'video' not in request.files:
+        return jsonify({'error': 'No video file'}), 400
+    
+    file = request.files['video']
+    exercise = request.form.get('exercise', 'squat')
+    
+    temp_path = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_video_{session['user_id']}_{file.filename}")
+    file.save(temp_path)
+    
+    try:
+        result = video_analyzer.analyze_video(temp_path, exercise)
+        
+        # Сохраняем результат в БД
+        if result.get('success'):
+            from database import get_db_connection
+            import json
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO exercise_analyses (user_id, exercise_type, score, feedback, angles)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (
+                session['user_id'],
+                exercise,
+                result['avg_score'],
+                '\n'.join(result['feedback']),
+                json.dumps(result.get('angles', {}))
+            ))
+            conn.commit()
+            conn.close()
+            print(f"✅ Сохранён анализ {exercise}: {result['avg_score']} баллов")
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)})
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+@app.route('/analyze_video_page')
+def analyze_video_page():
+    return render_template('analyze_video.html')
+
+@app.route('/exercise_history')
+def exercise_history():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import get_db_connection
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT exercise_type, score, feedback, angles, created_at
+        FROM exercise_analyses
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+    """, (session['user_id'],))
+    rows = cur.fetchall()
+    conn.close()
+    
+    analyses = []
+    for row in rows:
+        analyses.append({
+            'exercise_type': row[0],
+            'score': row[1],
+            'feedback': row[2],
+            'angles': row[3],
+            'created_at': row[4]
+        })
+    
+    return render_template('exercise_history.html', analyses=analyses)
 
 # Обработка POST на главную
 @app.route('/', methods=['POST'])
@@ -71,12 +134,64 @@ def home_post():
 def uploaded_file(filename):
     return send_from_directory('uploads', filename)
 
-@app.route('/static/media/<path:filename>')
-def serve_media(filename):
-    return send_from_directory('static/media', filename)
-app.add_url_rule('/generate_workout', 'generate_workout', generate_workout_page, methods=['GET', 'POST'])
-app.add_url_rule('/api/generate_workout', 'generate_workout_api', generate_workout_api, methods=['POST'])
-app.add_url_rule('/generate_meal', 'generate_meal', generate_meal_page, methods=['GET', 'POST'])
+@app.route('/workout_history')
+def workout_history():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import get_db_connection
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, program_data, version, days_per_week, created_at, is_active
+        FROM workout_programs
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+    """, (session['user_id'],))
+    rows = cur.fetchall()
+    conn.close()
+    
+    programs = []
+    for row in rows:
+        programs.append({
+            'id': row[0],
+            'program_data': row[1],
+            'version': row[2],
+            'days_per_week': row[3],
+            'created_at': row[4],
+            'is_active': row[5]
+        })
+    
+    return render_template('workout_history.html', programs=programs)
+
+@app.route('/activate_workout/<int:program_id>')
+def activate_workout(program_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import get_db_connection
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Деактивируем все программы пользователя
+    cur.execute("""
+        UPDATE workout_programs 
+        SET is_active = FALSE 
+        WHERE user_id = %s
+    """, (session['user_id'],))
+    
+    # Активируем выбранную
+    cur.execute("""
+        UPDATE workout_programs 
+        SET is_active = TRUE 
+        WHERE id = %s AND user_id = %s
+    """, (program_id, session['user_id']))
+    
+    conn.commit()
+    conn.close()
+    
+    flash('Программа активирована!', 'success')
+    return redirect(url_for('workout_history'))
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>История анализов техники - NS Body Scan</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
+        h1, h2 { color: #ff66b5; }
+        .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
+        .card { background: #f8f9fa; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 4px solid #ff66b5; }
+        .score { font-size: 24px; font-weight: bold; color: #ff66b5; }
+        .badge { background: #e9ecef; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+        .date { color: #666; font-size: 12px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between;">
+            <h1>🧠 NS Body Scan</h1>
+            <div class="menu">
+                <a href="/dashboard">Главная</a>
+                <a href="/profile">Профиль</a>
+                <a href="/logout">Выйти</a>
+            </div>
+        </div>
+        
+        <h2>📊 История анализов техники</h2>
+        
+        {% if analyses %}
+            {% for a in analyses %}
+            <div class="card">
+                <div class="date">📅 {{ a.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+                <p>🏋️ <strong>{{ a.exercise_type }}</strong></p>
+                <p>⭐ Оценка: <span class="score">{{ a.score }}/100</span></p>
+                <p>📝 <strong>Рекомендации:</strong></p>
+                <ul>
+                    {% for fb in a.feedback.split('\n')[:3] %}
+                    <li>{{ fb }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>Нет сохранённых анализов. Загрузите видео для анализа техники!</p>
+            <a href="/analyze_video_page" class="button">🎥 Проанализировать</a>
+        {% endif %}
+        
+        <p style="margin-top: 20px;"><a href="/dashboard">← Вернуться на дашборд</a></p>
+    </div>
+</body>
+</html>

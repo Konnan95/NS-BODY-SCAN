@@ -2,7 +2,7 @@
 Модуль анализа осанки
 """
 
-from flask import request, redirect, url_for, session, flash, render_template
+from flask import request, redirect, url_for, session, flash, render_template, jsonify
 from database import get_user_by_id, save_posture_analysis, save_body_composition, save_workout_program, save_meal_plan
 from posture_analyzer import analyze_posture, save_analyzed_photo, save_original_photo
 from config import UPLOAD_FOLDER
@@ -14,6 +14,7 @@ from pdf_generator import generate_pdf_report
 from body_fat_predictor_sklearn import body_fat_predictor
 from bodypix_analyzer import bodypix
 from exercise_translations import translate_exercise_name
+from video_analyzer_mediapipe import video_analyzer
 
 
 def extract_exercises_from_text(text):

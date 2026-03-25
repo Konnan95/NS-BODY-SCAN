@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>История программ тренировок - NS Body Scan</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
+        h1, h2 { color: #ff66b5; }
+        .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
+        .card { background: #f8f9fa; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 4px solid #ff66b5; }
+        .version { font-size: 12px; color: #666; margin-bottom: 10px; }
+        .active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .active h3, .active .version { color: white; }
+        .button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; text-decoration: none; display: inline-block; font-size: 12px; }
+        pre { white-space: pre-wrap; font-family: inherit; background: white; padding: 15px; border-radius: 10px; max-height: 250px; overflow-y: auto; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between;">
+            <h1>🧠 NS Body Scan</h1>
+            <div class="menu">
+                <a href="/dashboard">Главная</a>
+                <a href="/profile">Профиль</a>
+                <a href="/logout">Выйти</a>
+            </div>
+        </div>
+        
+        <h2>📋 История программ тренировок</h2>
+        
+        {% if programs %}
+            {% for p in programs %}
+            <div class="card {% if p.is_active %}active{% endif %}">
+                <div class="version">
+                    Версия {{ p.version }} от {{ p.created_at.strftime('%d.%m.%Y %H:%M') }}
+                    {% if p.is_active %}
+                        <span style="background: #28a745; padding: 2px 8px; border-radius: 12px; font-size: 10px;">Активная</span>
+                    {% endif %}
+                </div>
+                <p>📅 {{ p.days_per_week }} тренировок в неделю</p>
+                <pre>{{ p.program_data[:500] }}{% if p.program_data|length > 500 %}...{% endif %}</pre>
+                {% if not p.is_active %}
+                <a href="/activate_workout/{{ p.id }}" class="button">⭐ Сделать активной</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>У вас пока нет сохранённых программ. Пройдите анализ или сгенерируйте программу!</p>
+            <a href="/generate_workout" class="button">➕ Создать программу</a>
+        {% endif %}
+        
+        <p style="margin-top: 20px;"><a href="/dashboard">← Вернуться на дашборд</a></p>
+    </div>
+</body>
+</html>
