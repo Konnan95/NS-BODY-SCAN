@@ -235,6 +235,7 @@
             <p class="date">Версия {{ meal_plan.version }} от {{ meal_plan.created_at.strftime('%d.%m.%Y') if meal_plan.created_at else 'недавно' }}</p>
             <pre>{{ meal_plan.plan_data }}</pre>
             <a href="/generate_meal" class="button">🔄 Сгенерировать новый план питания</a>
+            <a href="/meal_history" class="button" style="background: #6c757d;">📜 История версий</a>
         </div>
         {% else %}
         <div class="card">

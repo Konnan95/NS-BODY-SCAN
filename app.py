@@ -192,6 +192,63 @@ def activate_workout(program_id):
     
     flash('Программа активирована!', 'success')
     return redirect(url_for('workout_history'))
+@app.route('/meal_history')
+def meal_history():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import get_db_connection
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, plan_data, version, created_at, is_active
+        FROM meal_plans
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+    """, (session['user_id'],))
+    rows = cur.fetchall()
+    conn.close()
+    
+    meals = []
+    for row in rows:
+        meals.append({
+            'id': row[0],
+            'plan_data': row[1],
+            'version': row[2],
+            'created_at': row[3],
+            'is_active': row[4]
+        })
+    
+    return render_template('meal_history.html', meals=meals)
+
+@app.route('/activate_meal/<int:meal_id>')
+def activate_meal(meal_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import get_db_connection
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Деактивируем все планы пользователя
+    cur.execute("""
+        UPDATE meal_plans 
+        SET is_active = FALSE 
+        WHERE user_id = %s
+    """, (session['user_id'],))
+    
+    # Активируем выбранный
+    cur.execute("""
+        UPDATE meal_plans 
+        SET is_active = TRUE 
+        WHERE id = %s AND user_id = %s
+    """, (meal_id, session['user_id']))
+    
+    conn.commit()
+    conn.close()
+    
+    flash('План питания активирован!', 'success')
+    return redirect(url_for('meal_history'))
 
 if __name__ == '__main__':
     app.run(debug=True)
