@@ -1,11 +1,16 @@
 """
 Конфигурационный файл NS Body Scan
+Секреты загружаются из .env файла
 """
 
 import os
+from dotenv import load_dotenv
 
-# Секретный ключ (в продакшене должен быть в переменных окружения)
-SECRET_KEY = 'ns_body_scan_secret_key_2026'
+# Загружаем переменные из .env
+load_dotenv()
+
+# Секретный ключ (из переменных окружения)
+SECRET_KEY = os.environ.get('SECRET_KEY', 'change-me-in-production')
 
 # Папка для загрузки фото
 UPLOAD_FOLDER = 'uploads'
@@ -39,26 +44,35 @@ ACTIVITY_LEVELS = {
 # Пути к файлам
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_PATH = os.path.join(BASE_DIR, UPLOAD_FOLDER)
-EXERCISES_FILE = os.path.join(BASE_DIR, 'exercises.json')
 
 # Создаём папку для загрузки, если её нет
 os.makedirs(UPLOAD_PATH, exist_ok=True)
 
 # ========== НАСТРОЙКИ POSTGRESQL ==========
-# Импортируем пароль из секретного файла
-from db_secret import DB_PASSWORD
-
 DB_CONFIG = {
-    'dbname': 'ns_body_scan',
-    'user': 'postgres',
-    'password': DB_PASSWORD,
-    'host': 'localhost',
-    'port': '5432'
+    'dbname': os.environ.get('DB_NAME', 'ns_body_scan'),
+    'user': os.environ.get('DB_USER', 'postgres'),
+    'password': os.environ.get('DB_PASSWORD'),
+    'host': os.environ.get('DB_HOST', 'localhost'),
+    'port': os.environ.get('DB_PORT', '5432')
 }
 
 # ========== НАСТРОЙКИ GIGACHAT ==========
-GIGACHAT_AUTH_KEY = "MDE5ZDEwOTAtMWVkMy03NjgxLThmOTEtNDdhYzE5NDlkYzgwOjBlNDIyMzRmLThjNmQtNDFmNS1iMDUyLWQ4OTVjNWM0Y2ZjZQ=="
+GIGACHAT_AUTH_KEY = os.environ.get('GIGACHAT_AUTH_KEY')
 
 # ========== НАСТРОЙКИ EXERCISEDB API ==========
-EXERCISEDB_API_KEY = "f7b1970b4fmshab4a7caadcbb35fp126741jsn27ab090ace7d"
-EXERCISEDB_HOST = "exercisedb.p.rapidapi.com"
+EXERCISEDB_API_KEY = os.environ.get('EXERCISEDB_API_KEY')
+EXERCISEDB_HOST = os.environ.get('EXERCISEDB_HOST', 'exercisedb.p.rapidapi.com')
+
+# ========== ПРОВЕРКА ОБЯЗАТЕЛЬНЫХ ПЕРЕМЕННЫХ ==========
+if not DB_CONFIG['password']:
+    print("⚠️ ВНИМАНИЕ: DB_PASSWORD не задан в .env файле!")
+
+if not SECRET_KEY or SECRET_KEY == 'change-me-in-production':
+    print("⚠️ ВНИМАНИЕ: SECRET_KEY не задан в .env файле!")
+
+if not GIGACHAT_AUTH_KEY:
+    print("⚠️ ВНИМАНИЕ: GIGACHAT_AUTH_KEY не задан в .env файле!")
+
+if not EXERCISEDB_API_KEY:
+    print("⚠️ ВНИМАНИЕ: EXERCISEDB_API_KEY не задан в .env файле!")
