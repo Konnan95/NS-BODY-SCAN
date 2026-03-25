@@ -84,6 +84,28 @@
                     </p>
                 </div>
                 {% endif %}
+           <!-- Прогноз прогресса -->
+{% if progress_forecast %}
+<div class="card" style="background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%); color: white;">
+    <h3 style="color: white;">🔮 Прогноз на месяц</h3>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        {% if progress_forecast.body_fat %}
+        <div>
+            <p>📉 % жира</p>
+            <p style="font-size: 24px; font-weight: bold;">{{ progress_forecast.body_fat }}%</p>
+            <p style="font-size: 12px;">Тренд: {{ progress_forecast.body_fat_trend }}</p>
+        </div>
+        {% endif %}
+        {% if progress_forecast.weight %}
+        <div>
+            <p>⚖️ Вес</p>
+            <p style="font-size: 24px; font-weight: bold;">{{ progress_forecast.weight }} кг</p>
+        </div>
+        {% endif %}
+    </div>
+    <p style="font-size: 12px; margin-top: 10px;">💡 При сохранении текущего темпа</p>
+</div>
+{% endif %}
                 
                 {% if prev_composition and last_body_fat %}
                 <div>

@@ -1,3 +1,7 @@
+"""
+Менеджер для работы с базой упражнений и GIF-файлами
+"""
+
 import os
 import json
 from typing import List, Dict, Optional
@@ -97,8 +101,20 @@ class ExerciseManager:
     
     @lru_cache(maxsize=1)
     def get_all_with_media(self) -> List[Dict]:
-        """Возвращает все упражнения, у которых есть GIF"""
-        return [ex for ex in self._exercises if self.has_gif(ex)]
+        """Возвращает все упражнения, у которых есть GIF, с добавлением полей target_muscles и т.д."""
+        result = []
+        for ex in self._exercises:
+            if self.has_gif(ex):
+                result.append({
+                    'exerciseId': ex.get('exerciseId'),
+                    'name': ex.get('name'),
+                    'gifUrl': ex.get('gifUrl'),
+                    'target_muscles': ex.get('targetMuscles', []),
+                    'bodyParts': ex.get('bodyParts', []),
+                    'equipments': ex.get('equipments', []),
+                    'instructions': ex.get('instructions', [])
+                })
+        return result
     
     def has_gif(self, exercise: Dict) -> bool:
         """Проверяет, есть ли GIF для упражнения"""
@@ -173,7 +189,7 @@ class ExerciseManager:
         unique_equipment = set()
         
         for ex in exercises_with_media:
-            unique_muscles.update(ex.get('targetMuscles', []))
+            unique_muscles.update(ex.get('target_muscles', []))
             unique_body_parts.update(ex.get('bodyParts', []))
             unique_equipment.update(ex.get('equipments', []))
         
@@ -200,12 +216,11 @@ class ExerciseManager:
                 'exerciseId': ex['exerciseId'],
                 'name': ex['name'],
                 'gifFile': ex['gifUrl'].split('/')[-1],
-                'targetMuscles': ex.get('targetMuscles', []),
+                'targetMuscles': ex.get('target_muscles', []),
                 'bodyParts': ex.get('bodyParts', []),
                 'equipments': ex.get('equipments', [])
             })
         
-        # Создаём папку data если её нет
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
         with open(output_path, 'w', encoding='utf-8') as f:

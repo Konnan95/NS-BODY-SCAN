@@ -478,3 +478,58 @@ def get_previous_body_composition(user_id):
             'date': row[3]
         }
     return None
+def predict_progress(user_id):
+    """Прогноз прогресса на основе истории анализов"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Получаем историю % жира
+    cur.execute("""
+        SELECT created_at, body_fat
+        FROM body_composition
+        WHERE user_id = %s
+        ORDER BY created_at ASC
+    """, (user_id,))
+    body_fat_history = cur.fetchall()
+    
+    # Получаем историю веса из daily_health
+    cur.execute("""
+        SELECT date, weight
+        FROM daily_health
+        WHERE user_id = %s AND weight IS NOT NULL
+        ORDER BY date ASC
+    """, (user_id,))
+    weight_history = cur.fetchall()
+    
+    conn.close()
+    
+    result = {}
+    
+    # Прогноз % жира
+    if len(body_fat_history) >= 2:
+        changes = []
+        for i in range(1, len(body_fat_history)):
+            if body_fat_history[i-1][1] and body_fat_history[i][1]:
+                diff = body_fat_history[i-1][1] - body_fat_history[i][1]
+                changes.append(diff)
+        if changes:
+            avg_change = sum(changes) / len(changes)
+            last_fat = body_fat_history[-1][1] if body_fat_history[-1][1] else 25
+            predicted_fat = last_fat - (avg_change * 4)
+            result['body_fat'] = round(max(10, min(45, predicted_fat)), 1)
+            result['body_fat_trend'] = '⬇️ снижается' if avg_change > 0 else '⬆️ растёт'
+    
+    # Прогноз веса
+    if len(weight_history) >= 2:
+        changes = []
+        for i in range(1, len(weight_history)):
+            if weight_history[i-1][1] and weight_history[i][1]:
+                diff = weight_history[i-1][1] - weight_history[i][1]
+                changes.append(diff)
+        if changes:
+            avg_change = sum(changes) / len(changes)
+            last_weight = weight_history[-1][1] if weight_history[-1][1] else 70
+            predicted_weight = last_weight - (avg_change * 4)
+            result['weight'] = round(max(40, min(150, predicted_weight)), 1)
+    
+    return result

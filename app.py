@@ -1,4 +1,4 @@
-from flask import Flask, session, render_template, redirect, url_for, send_from_directory, jsonify, request
+from flask import Flask, session, render_template, redirect, url_for, send_from_directory, jsonify, request, flash
 from config import SECRET_KEY, UPLOAD_PATH
 from auth import register_user, login_user, logout_user
 from dashboard import dashboard_page
@@ -40,13 +40,6 @@ app.add_url_rule('/generate_meal', 'generate_meal', generate_meal_page, methods=
 app.add_url_rule('/export/posture', 'export_posture', export_posture_csv)
 app.add_url_rule('/export/composition', 'export_composition', export_body_composition_csv)
 
-# Страница библиотеки упражнений
-@app.route('/exercises')
-def exercises_page():
-    from exercise_manager import exercise_manager
-    exercises = exercise_manager.get_all_with_media()
-    return render_template('exercises.html', exercises=exercises)
-
 # Анализ видео
 @app.route('/analyze_video', methods=['POST'])
 def analyze_video():
@@ -65,7 +58,6 @@ def analyze_video():
     try:
         result = video_analyzer.analyze_video(temp_path, exercise)
         
-        # Сохраняем результат в БД
         if result.get('success'):
             from database import get_db_connection
             import json
@@ -91,6 +83,7 @@ def analyze_video():
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
 @app.route('/analyze_video_page')
 def analyze_video_page():
     return render_template('analyze_video.html')
@@ -124,16 +117,26 @@ def exercise_history():
     
     return render_template('exercise_history.html', analyses=analyses)
 
-# Обработка POST на главную
-@app.route('/', methods=['POST'])
-def home_post():
-    return redirect(url_for('login'))
+# Страница библиотеки упражнений
+@app.route('/exercises')
+def exercises_page():
+    from exercise_manager import exercise_manager
+    exercises = exercise_manager.get_all_with_media()
+    
+    # Добавляем поле media для каждого упражнения
+    for ex in exercises:
+        gif_name = ex.get('gifUrl', '').split('/')[-1]
+        if gif_name:
+            ex['media'] = {
+                'type': 'gif',
+                'url': f'/static/media/{gif_name}'
+            }
+        else:
+            ex['media'] = None
+    
+    return render_template('exercises.html', exercises=exercises)
 
-# Раздача загруженных файлов
-@app.route('/uploads/<path:filename>')
-def uploaded_file(filename):
-    return send_from_directory('uploads', filename)
-
+# История программ
 @app.route('/workout_history')
 def workout_history():
     if 'user_id' not in session:
@@ -173,14 +176,12 @@ def activate_workout(program_id):
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Деактивируем все программы пользователя
     cur.execute("""
         UPDATE workout_programs 
         SET is_active = FALSE 
         WHERE user_id = %s
     """, (session['user_id'],))
     
-    # Активируем выбранную
     cur.execute("""
         UPDATE workout_programs 
         SET is_active = TRUE 
@@ -192,6 +193,8 @@ def activate_workout(program_id):
     
     flash('Программа активирована!', 'success')
     return redirect(url_for('workout_history'))
+
+# История планов питания
 @app.route('/meal_history')
 def meal_history():
     if 'user_id' not in session:
@@ -230,14 +233,12 @@ def activate_meal(meal_id):
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Деактивируем все планы пользователя
     cur.execute("""
         UPDATE meal_plans 
         SET is_active = FALSE 
         WHERE user_id = %s
     """, (session['user_id'],))
     
-    # Активируем выбранный
     cur.execute("""
         UPDATE meal_plans 
         SET is_active = TRUE 
@@ -249,6 +250,16 @@ def activate_meal(meal_id):
     
     flash('План питания активирован!', 'success')
     return redirect(url_for('meal_history'))
+
+# Обработка POST на главную
+@app.route('/', methods=['POST'])
+def home_post():
+    return redirect(url_for('login'))
+
+# Раздача загруженных файлов
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory('uploads', filename)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -63,14 +63,13 @@
                  data-muscle="{% for m in ex.target_muscles %}{{ m|lower }}{% if not loop.last %},{% endif %}{% endfor %}">
                 <h3>{{ ex.name }}</h3>
                 <div class="exercise-media">
-    {% if ex.media and ex.media.url %}
-    <img src="{{ ex.media.url }}" alt="{{ ex.name }}" loading="lazy" 
-         onerror="this.parentElement.innerHTML='<div style=\'padding:40px;text-align:center;\'>🎥 GIF</div>'">
-    <!-- ОТЛАДКА: путь = {{ ex.media.url }} -->
-    {% else %}
-    <div style="padding: 40px; text-align: center;">🎥 GIF (нет пути: media={{ ex.media }})</div>
-    {% endif %}
-</div>
+                    {% if ex.media and ex.media.url %}
+                    <img src="{{ ex.media.url }}" alt="{{ ex.name }}" loading="lazy" 
+                         onerror="this.parentElement.innerHTML='<div style=\'padding:40px;text-align:center;\'>🎥 GIF</div>'">
+                    {% else %}
+                    <div style="padding: 40px; text-align: center;">🎥 GIF</div>
+                    {% endif %}
+                </div>
                 <div class="exercise-details">
                     {% if ex.target_muscles %}
                     <div>🎯 <strong>Мышцы:</strong> {{ ex.target_muscles[:3]|join(', ') }}</div>
@@ -106,37 +105,82 @@
         let currentFilter = 'all';
         let currentSearch = '';
         
+        // Словарь перевода мышц
+        const muscleTranslation = {
+            'chest': 'грудь',
+            'back': 'спина',
+            'legs': 'ноги',
+            'shoulders': 'плечи',
+            'arms': 'руки',
+            'core': 'пресс',
+            'pectorals': 'грудь',
+            'lats': 'спина',
+            'traps': 'спина',
+            'glutes': 'ноги',
+            'quads': 'ноги',
+            'biceps': 'руки',
+            'triceps': 'руки',
+            'forearms': 'руки',
+            'abs': 'пресс'
+        };
+        
+        function matchesFilter(muscleString, filter) {
+    if (filter === 'all') return true;
+    
+    const muscles = muscleString.split(',');
+    for (let m of muscles) {
+        const muscle = m.trim();
+        // Определяем категорию по мышце
+        if (filter === 'chest' && (muscle === 'pectorals' || muscle === 'chest')) return true;
+        if (filter === 'back' && (muscle === 'lats' || muscle === 'traps' || muscle === 'upper back' || muscle === 'spine')) return true;
+        if (filter === 'legs' && (muscle === 'glutes' || muscle === 'quads' || muscle === 'hamstrings' || muscle === 'calves' || muscle === 'abductors' || muscle === 'adductors')) return true;
+        if (filter === 'shoulders' && (muscle === 'delts' || muscle === 'shoulders')) return true;
+        if (filter === 'arms' && (muscle === 'biceps' || muscle === 'triceps' || muscle === 'forearms')) return true;
+        if (filter === 'core' && (muscle === 'abs' || muscle === 'core')) return true;
+    }
+    return false;
+}
+        
         function updateStats(visibleCount, totalCount) {
             statsDiv.innerHTML = `📊 Показано ${visibleCount} из ${totalCount} упражнений`;
         }
         
-        function filterExercises() {
-            let visibleCount = 0;
-            
-            cards.forEach(card => {
-                const name = card.dataset.name || '';
-                const muscle = card.dataset.muscle || '';
-                const searchMatch = currentSearch === '' || name.includes(currentSearch) || muscle.includes(currentSearch);
-                const filterMatch = currentFilter === 'all' || muscle.includes(currentFilter);
-                
-                if (searchMatch && filterMatch) {
-                    card.style.display = '';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-            
-            updateStats(visibleCount, cards.length);
-            
-            if (visibleCount === 0) {
-                noResultsDiv.style.display = 'block';
-                exercisesGrid.style.display = 'none';
-            } else {
-                noResultsDiv.style.display = 'none';
-                exercisesGrid.style.display = 'grid';
-            }
+    function filterExercises() {
+    let visibleCount = 0;
+    console.log('=== ФИЛЬТРАЦИЯ ===');
+    console.log('Текущий фильтр:', currentFilter);
+    console.log('Поиск:', currentSearch);
+    
+    cards.forEach(card => {
+        const name = card.dataset.name || '';
+        const muscle = card.dataset.muscle || '';
+        const searchMatch = currentSearch === '' || name.includes(currentSearch);
+        const filterMatch = matchesFilter(muscle, currentFilter);
+        
+        // Отладка первых 10 карточек
+        if (visibleCount < 10) {
+            console.log(`Упражнение: ${name}, мышцы: ${muscle}, filterMatch: ${filterMatch}`);
         }
+        
+        if (searchMatch && filterMatch) {
+            card.style.display = '';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    console.log('Видимых:', visibleCount);
+    updateStats(visibleCount, cards.length);
+    
+    if (visibleCount === 0) {
+        noResultsDiv.style.display = 'block';
+        exercisesGrid.style.display = 'none';
+    } else {
+        noResultsDiv.style.display = 'none';
+        exercisesGrid.style.display = 'grid';
+    }
+}
         
         searchInput.addEventListener('input', (e) => {
             currentSearch = e.target.value.toLowerCase();
@@ -154,5 +198,16 @@
         
         filterExercises();
     </script>
+<script>
+    // Отладка: вывести первые 10 упражнений
+    setTimeout(() => {
+        const cards = document.querySelectorAll('.exercise-card');
+        console.log('Всего карточек:', cards.length);
+        for (let i = 0; i < Math.min(10, cards.length); i++) {
+            const card = cards[i];
+            console.log(`Упражнение ${i}: name="${card.dataset.name}", muscle="${card.dataset.muscle}"`);
+        }
+    }, 1000);
+</script>
 </body>
 </html>
