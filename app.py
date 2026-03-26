@@ -77,6 +77,8 @@ def analyze_video():
     
     try:
         result = video_analyzer.analyze_video(temp_path, exercise)
+        # Добавляем эталонный GIF
+        result['template_gif'] = video_analyzer.get_template_gif(exercise)
         
         if result.get('success'):
             from database import get_db_connection
