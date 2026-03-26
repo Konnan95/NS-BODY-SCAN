@@ -97,6 +97,26 @@
             border-radius: 10px;
             margin-top: 10px;
         }
+        .voice-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            margin-left: 10px;
+            padding: 5px;
+            border-radius: 50%;
+            transition: 0.2s;
+            vertical-align: middle;
+        }
+        .voice-btn:hover {
+            background: rgba(255,102,181,0.2);
+            transform: scale(1.1);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body>
@@ -116,7 +136,10 @@
         
         <!-- Фото с разметкой (три ракурса) -->
         <div class="card">
-            <h3>📸 Визуализация анализа осанки</h3>
+            <div class="card-header">
+                <h3>📸 Визуализация анализа осанки</h3>
+                <button class="voice-btn" onclick="speakPhotoDescription()">🔊 Озвучить</button>
+            </div>
             <div class="grid-3">
                 {% if front_photo_path and front_photo_path != 'None' %}
                 <div class="photo-container">
@@ -143,7 +166,10 @@
         </div>
         
         <div class="card">
-            <h2>📊 Результаты анализа осанки</h2>
+            <div class="card-header">
+                <h2>📊 Результаты анализа осанки</h2>
+                <button class="voice-btn" onclick="speakPostureResults()">🔊 Озвучить</button>
+            </div>
             <p>📐 <strong>Наклон плеч:</strong> {{ shoulder }}%</p>
             <p>📐 <strong>Наклон таза:</strong> {{ hip }}%</p>
             <p>📐 <strong>Наклон головы:</strong> {{ head }}°</p>
@@ -160,7 +186,10 @@
         </div>
         
         <div class="card">
-            <h3>🧬 Анализ состава тела</h3>
+            <div class="card-header">
+                <h3>🧬 Анализ состава тела</h3>
+                <button class="voice-btn" onclick="speakCompositionResults()">🔊 Озвучить</button>
+            </div>
             <p>🔥 <strong>% жира:</strong> {{ body_fat }}% 
                 {% if body_fat < 18 %}
                     <span style="color: #28a745;">⬇️ ниже нормы (18-28%)</span>
@@ -188,7 +217,10 @@
         <!-- BodyPix анализ пропорций -->
         {% if bodypix_result and bodypix_result.success %}
         <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-            <h3 style="color: white;">📏 Анализ пропорций тела (BodyPix)</h3>
+            <div class="card-header">
+                <h3 style="color: white;">📏 Анализ пропорций тела (BodyPix)</h3>
+                <button class="voice-btn" onclick="speakBodypixResults()" style="color: white;">🔊 Озвучить</button>
+            </div>
             <p>📐 <strong>Тип фигуры:</strong> {{ bodypix_result.body_type }}</p>
             <p>📏 <strong>Соотношение плечи/талия:</strong> {{ bodypix_result.ratio_shoulder_waist }}</p>
             <p>📏 <strong>Соотношение бёдра/талия:</strong> {{ bodypix_result.ratio_hip_waist }}</p>
@@ -212,7 +244,10 @@
         {% endif %}
         
         <div class="card">
-            <h3>🏋️ AI-план тренировок</h3>
+            <div class="card-header">
+                <h3>🏋️ AI-план тренировок</h3>
+                <button class="voice-btn" onclick="speakWorkoutPlan()">🔊 Озвучить</button>
+            </div>
             <pre>{{ workout_plan_text }}</pre>
         </div>
         
@@ -253,12 +288,18 @@
         {% endif %}
         
         <div class="card">
-            <h3>🥗 AI-план питания (на день)</h3>
+            <div class="card-header">
+                <h3>🥗 AI-план питания (на день)</h3>
+                <button class="voice-btn" onclick="speakMealPlan()">🔊 Озвучить</button>
+            </div>
             <pre>{{ meal_plan }}</pre>
         </div>
         
         <div class="card">
-            <h3>🥗 Рекомендации по питанию</h3>
+            <div class="card-header">
+                <h3>🥗 Рекомендации по питанию</h3>
+                <button class="voice-btn" onclick="speakNutrition()">🔊 Озвучить</button>
+            </div>
             <p>🔥 Калории: {{ calories }} ккал/день</p>
             <p>🥩 Белки: {{ protein }} г</p>
             <p>🧈 Жиры: {{ fat }} г</p>
@@ -285,5 +326,60 @@
             </a>
         </div>
     </div>
+    
+    <script>
+        function speakText(text) {
+    fetch('/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.audio_url) {
+            const audio = new Audio(data.audio_url);
+            audio.play();
+        } else {
+            console.error('Ошибка:', data.error);
+        }
+    })
+    .catch(err => console.error('Ошибка:', err));
+}
+        
+        function speakPostureResults() {
+            let text = `Результаты анализа осанки. Наклон плеч: {{ shoulder }} процентов. Наклон таза: {{ hip }} процентов. Наклон головы: {{ head }} градусов. Оценка осанки: {{ score }} из 10.`;
+            speakText(text);
+        }
+        
+        function speakCompositionResults() {
+            let text = `Анализ состава тела. Процент жира: {{ body_fat }}. Мышечная масса: {{ muscle_mass }} килограмм. Вода: {{ water }} килограмм. Висцеральный жир: {{ visceral_fat }}.`;
+            speakText(text);
+        }
+        
+        function speakBodypixResults() {
+            let text = `Тип фигуры: {{ bodypix_result.body_type }}. Соотношение плечи к талии: {{ bodypix_result.ratio_shoulder_waist }}. Соотношение бёдра к талии: {{ bodypix_result.ratio_hip_waist }}.`;
+            speakText(text);
+        }
+        
+        function speakWorkoutPlan() {
+            let text = document.querySelector('.card:has(h3:contains("🏋️ AI-план тренировок")) pre')?.innerText || 'План тренировок готов.';
+            speakText(text.substring(0, 500));
+        }
+        
+        function speakMealPlan() {
+            let text = document.querySelector('.card:has(h3:contains("🥗 AI-план питания")) pre')?.innerText || 'План питания готов.';
+            speakText(text.substring(0, 500));
+        }
+        
+        function speakNutrition() {
+            let text = `Рекомендации по питанию. Калории: {{ calories }} килокалорий в день. Белки: {{ protein }} грамм. Жиры: {{ fat }} грамм. Углеводы: {{ carbs }} грамм.`;
+            speakText(text);
+        }
+        
+        function speakPhotoDescription() {
+            let text = `Визуализация анализа осанки. Три фотографии: спереди, сбоку и сзади. На фото отмечены 33 ключевые точки.`;
+            speakText(text);
+        }
+    </script>
 </body>
 </html>

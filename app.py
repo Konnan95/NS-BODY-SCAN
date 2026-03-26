@@ -13,6 +13,7 @@ from generate_meal import generate_meal_page
 from export_routes import export_posture_csv, export_body_composition_csv
 from video_analyzer_mediapipe import video_analyzer
 from decorators import require_subscription
+from tts_helper import voice_trainer
 import os
 
 app = Flask(__name__)
@@ -277,6 +278,19 @@ def activate_meal(meal_id):
 def home_post():
     return redirect(url_for('login'))
 
+@app.route('/speak', methods=['POST'])
+def speak():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.json
+    text = data.get('text', '')
+    if text:
+        audio_url = voice_trainer.speak(text)
+        if audio_url:
+            return jsonify({'audio_url': audio_url})
+        return jsonify({'error': 'Ошибка генерации речи'}), 500
+    return jsonify({'error': 'No text'}), 400
 # Раздача загруженных файлов
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
