@@ -14,6 +14,8 @@ from export_routes import export_posture_csv, export_body_composition_csv
 from video_analyzer_mediapipe import video_analyzer
 from decorators import require_subscription
 from tts_helper import voice_trainer
+from pose_comparator import pose_comparator
+import cv2
 import os
 
 app = Flask(__name__)
@@ -77,6 +79,7 @@ def analyze_video():
     
     try:
         result = video_analyzer.analyze_video(temp_path, exercise)
+        
         # Добавляем эталонный GIF
         result['template_gif'] = video_analyzer.get_template_gif(exercise)
         
@@ -99,8 +102,20 @@ def analyze_video():
             conn.close()
             print(f"✅ Сохранён анализ {exercise}: {result['avg_score']} баллов")
             
-            # Добавляем эталонный GIF
-            result['template_gif'] = video_analyzer.get_template_gif(exercise)
+            # Сравнение с эталоном (если есть фото из видео)
+            comparison = None
+            cap = cv2.VideoCapture(temp_path)
+            ret, frame = cap.read()
+            if ret:
+                temp_frame_path = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_frame_{session['user_id']}.jpg")
+                cv2.imwrite(temp_frame_path, frame)
+                comparison = pose_comparator.compare_with_template(temp_frame_path, exercise)
+                if os.path.exists(temp_frame_path):
+                    os.remove(temp_frame_path)
+            cap.release()
+            
+            if comparison:
+                result['comparison_feedback'] = comparison['feedback']
         
         return jsonify(result)
     except Exception as e:

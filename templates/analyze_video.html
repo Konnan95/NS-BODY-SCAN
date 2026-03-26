@@ -81,7 +81,18 @@
             </div>
             <div id="templateContainer" class="template-container"></div>
         </div>
-        
+        {% if comparison_feedback %}
+<div class="result-card">
+    <h3>📐 Сравнение с эталоном</h3>
+    <div class="feedback">
+        <ul>
+            {% for fb in comparison_feedback %}
+            <li>{{ fb }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
         <p style="margin-top: 20px; text-align: center;">
             <a href="/exercise_history">📋 Посмотреть историю анализов</a>
         </p>
