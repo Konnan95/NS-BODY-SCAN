@@ -531,5 +531,89 @@ def predict_progress(user_id):
             last_weight = weight_history[-1][1] if weight_history[-1][1] else 70
             predicted_weight = last_weight - (avg_change * 4)
             result['weight'] = round(max(40, min(150, predicted_weight)), 1)
+def check_achievements(user_id):
+    """Проверяет и выдаёт достижения"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Получаем уже полученные достижения
+    cur.execute("SELECT achievement_type FROM achievements WHERE user_id = %s", (user_id,))
+    existing = {row[0] for row in cur.fetchall()}
+    
+    new_achievements = []
+    
+    # 1. Первый анализ
+    if 'first_analysis' not in existing:
+        cur.execute("SELECT COUNT(*) FROM posture_analyses WHERE user_id = %s", (user_id,))
+        count = cur.fetchone()[0]
+        if count >= 1:
+            cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'first_analysis')", (user_id,))
+            new_achievements.append('🏆 Первый анализ осанки!')
+    
+    # 2. Первый чат
+    if 'first_chat' not in existing:
+        cur.execute("SELECT COUNT(*) FROM user_activity_logs WHERE user_id = %s AND action = 'chat'", (user_id,))
+        count = cur.fetchone()[0]
+        if count >= 1:
+            cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'first_chat')", (user_id,))
+            new_achievements.append('💬 Первый диалог с AI-тренером!')
+    
+    # 3. 7 дней шагов
+    if 'steps_7_days' not in existing:
+        cur.execute("""
+            SELECT COUNT(DISTINCT date) FROM daily_health 
+            WHERE user_id = %s AND steps > 5000 AND date >= CURRENT_DATE - INTERVAL '7 days'
+        """, (user_id,))
+        count = cur.fetchone()[0]
+        if count >= 7:
+            cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'steps_7_days')", (user_id,))
+            new_achievements.append('👣 7 дней активности подряд!')
+    
+    # 4. Первый анализ видео
+    if 'first_video_analysis' not in existing:
+        cur.execute("SELECT COUNT(*) FROM exercise_analyses WHERE user_id = %s", (user_id,))
+        count = cur.fetchone()[0]
+        if count >= 1:
+            cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'first_video_analysis')", (user_id,))
+            new_achievements.append('🎥 Первый анализ техники!')
+    # 5. 5 тренировок
+    if 'five_workouts' not in existing:
+        cur.execute("SELECT COUNT(*) FROM workout_programs WHERE user_id = %s", (user_id,))
+        count = cur.fetchone()[0]
+        if count >= 5:
+            cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'five_workouts')", (user_id,))
+            new_achievements.append('💪 5 сгенерированных программ!')
+    
+    # 6. 3 плана питания
+    if 'three_meals' not in existing:
+        cur.execute("SELECT COUNT(*) FROM meal_plans WHERE user_id = %s", (user_id,))
+        count = cur.fetchone()[0]
+        if count >= 3:
+            cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'three_meals')", (user_id,))
+            new_achievements.append('🍎 3 плана питания!')
+    
+    # 7. Идеальная осанка
+    if 'perfect_posture' not in existing:
+        cur.execute("SELECT posture_score FROM posture_analyses WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (user_id,))
+        row = cur.fetchone()
+        if row and row[0] >= 9:
+            cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'perfect_posture')", (user_id,))
+            new_achievements.append('🎯 Идеальная осанка!')
+    
+    # 8. Снижение жира на 2%
+    if 'fat_loss' not in existing:
+        cur.execute("SELECT body_fat FROM body_composition WHERE user_id = %s ORDER BY created_at ASC LIMIT 1", (user_id,))
+        first = cur.fetchone()
+        cur.execute("SELECT body_fat FROM body_composition WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (user_id,))
+        last = cur.fetchone()
+        if first and last and first[0] and last[0] and (first[0] - last[0]) >= 2:
+            cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'fat_loss')", (user_id,))
+            new_achievements.append('🔥 Снижение жира на 2%!')
+    
+    return new_achievements    
+    conn.commit()
+    conn.close()
+    
+    return new_achievements
     
     return result

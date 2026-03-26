@@ -128,7 +128,19 @@
             <p style="font-size: 12px; margin-top: 10px;">💡 При сохранении текущего темпа</p>
         </div>
         {% endif %}
-        
+<!-- Достижения -->
+{% if achievements %}
+<div class="card" style="background: linear-gradient(135deg, #ffd89b 0%, #ff66b5 100%);">
+    <h3 style="color: white;">🏆 Новые достижения!</h3>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        {% for ach in achievements %}
+        <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 25px; font-size: 14px; color: white;">
+            🎉 {{ ach }}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}        
         <div class="grid">
             <div class="card">
                 <h3>📊 Ваши параметры</h3>

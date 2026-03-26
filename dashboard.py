@@ -1,5 +1,5 @@
 from flask import render_template, session, redirect, url_for, request
-from database import get_user_by_id, get_today_health, get_daily_health, get_progress_data, log_user_activity, get_active_workout_program, get_active_meal_plan, get_previous_posture_analysis, get_previous_body_composition, get_db_connection, predict_progress
+from database import get_user_by_id, get_today_health, get_daily_health, get_progress_data, log_user_activity, get_active_workout_program, get_active_meal_plan, get_previous_posture_analysis, get_previous_body_composition, get_db_connection, predict_progress, check_achievements
 
 def dashboard_page():
     if 'user_id' not in session:
@@ -41,6 +41,9 @@ def dashboard_page():
     # Прогноз прогресса
     progress_forecast = predict_progress(session['user_id'])
     
+    # Получаем достижения
+    achievements = check_achievements(session['user_id'])
+    
     log_user_activity(session['user_id'], 'view', '/dashboard')
     
     return render_template('dashboard.html', 
@@ -55,4 +58,5 @@ def dashboard_page():
                           prev_composition=prev_composition,
                           last_score=last_score,
                           last_body_fat=last_body_fat,
-                          progress_forecast=progress_forecast)
+                          progress_forecast=progress_forecast,
+                          achievements=achievements)

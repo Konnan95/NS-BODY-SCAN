@@ -419,5 +419,17 @@ class VideoAnalyzer:
             }
         
         return {'success': False, 'error': 'Не удалось распознать позу в видео'}
-
+    def get_template_gif(self, exercise_type):
+        """Возвращает путь к эталонному GIF для упражнения"""
+        templates = {
+            'squat': '/static/media/templates/squat_template.gif',
+            'pushup': '/static/media/templates/pushup_template.gif',
+            'lunge': '/static/media/templates/lunge_template.gif',
+            'deadlift': '/static/media/templates/deadlift_template.gif',
+            'plank': '/static/media/templates/plank_template.gif',
+            'pullup': '/static/media/templates/pullup_template.gif',
+            'dip': '/static/media/templates/dip_template.gif',
+            'leg_raise': '/static/media/templates/leg_raise_template.gif'
+        }
+        return templates.get(exercise_type)
 video_analyzer = VideoAnalyzer()

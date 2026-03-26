@@ -96,6 +96,9 @@ def analyze_video():
             conn.commit()
             conn.close()
             print(f"✅ Сохранён анализ {exercise}: {result['avg_score']} баллов")
+            
+            # Добавляем эталонный GIF
+            result['template_gif'] = video_analyzer.get_template_gif(exercise)
         
         return jsonify(result)
     except Exception as e:
@@ -291,14 +294,20 @@ def speak():
             return jsonify({'audio_url': audio_url})
         return jsonify({'error': 'Ошибка генерации речи'}), 500
     return jsonify({'error': 'No text'}), 400
+
 # Раздача загруженных файлов
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     return send_from_directory('uploads', filename)
+
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+    
+    # Логируем для достижений
+    from database import log_user_activity
+    log_user_activity(session['user_id'], 'chat', '/chat')
     
     from database import get_user_by_id
     user = get_user_by_id(session['user_id'])
