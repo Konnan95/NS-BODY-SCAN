@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI-чат - NS Body Scan</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: repeating-linear-gradient(45deg, #2c2c2c 0px, #2c2c2c 40px, #fff 40px, #fff 80px, #ff99cc 80px, #ff99cc 120px); padding: 20px; margin: 0; }
+        .container { max-width: 800px; margin: 0 auto; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; }
+        h1 { color: #ff66b5; }
+        .menu a { margin: 0 10px; color: #ff66b5; text-decoration: none; }
+        .chat-container { height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 15px; padding: 15px; margin: 20px 0; background: #f8f9fa; }
+        .message { margin: 10px 0; display: flex; }
+        .user-message { justify-content: flex-end; }
+        .bot-message { justify-content: flex-start; }
+        .message-content { max-width: 70%; padding: 10px 15px; border-radius: 20px; }
+        .user-message .message-content { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; }
+        .bot-message .message-content { background: #e9ecef; color: #333; }
+        .input-area { display: flex; gap: 10px; margin-top: 15px; }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 25px; }
+        button { background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%); color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; }
+        .loading { text-align: center; padding: 20px; color: #999; }
+        .badge { background: #ff66b5; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between;">
+            <h1>🧠 NS Body Scan</h1>
+            <div class="menu">
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/profile">👤 Профиль</a>
+                <a href="/analyze">🔍 Анализ</a>
+                <a href="/logout">🚪 Выйти</a>
+            </div>
+        </div>
+        
+        <h2>🤖 AI-тренер</h2>
+        <p>Задайте любой вопрос о тренировках, питании или здоровье. Я учту ваши данные!</p>
+        
+        <div class="badge">
+            🎯 Цель: {% if user.goal == 'lose' %}Похудение
+            {% elif user.goal == 'gain' %}Набор массы
+            {% elif user.goal == 'posture' %}Коррекция осанки
+            {% else %}Подтянутое тело{% endif %}
+        </div>
+        
+        <div class="chat-container" id="chatContainer">
+            <div class="message bot-message">
+                <div class="message-content">
+                    👋 Привет! Я твой AI-тренер. Спрашивай о тренировках, питании, технике упражнений — я помогу!
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <input type="text" id="questionInput" placeholder="Например: как правильно делать приседания?" onkeypress="if(event.keyCode==13) sendMessage()">
+            <button onclick="sendMessage()">📤 Отправить</button>
+        </div>
+    </div>
+    
+    <script>
+        const chatContainer = document.getElementById('chatContainer');
+        const questionInput = document.getElementById('questionInput');
+        
+        function addMessage(text, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = text;
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function sendMessage() {
+            const question = questionInput.value.trim();
+            if (!question) return;
+            
+            addMessage(question, true);
+            questionInput.value = '';
+            
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message bot-message';
+            loadingDiv.id = 'loading';
+            loadingDiv.innerHTML = '<div class="message-content">🤔 Думаю...</div>';
+            chatContainer.appendChild(loadingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `question=${encodeURIComponent(question)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading')?.remove();
+                if (data.error) {
+                    addMessage(`❌ Ошибка: ${data.error}`, false);
+                } else {
+                    addMessage(data.answer, false);
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading')?.remove();
+                addMessage(`❌ Ошибка: ${error.message}`, false);
+            });
+        }
+    </script>
+</body>
+</html>

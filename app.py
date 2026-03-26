@@ -281,6 +281,42 @@ def home_post():
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     return send_from_directory('uploads', filename)
+@app.route('/chat', methods=['GET', 'POST'])
+def chat():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import get_user_by_id
+    user = get_user_by_id(session['user_id'])
+    
+    if request.method == 'POST':
+        question = request.form.get('question', '')
+        if not question:
+            return jsonify({'error': 'Введите вопрос'}), 400
+        
+        from giga_helper import ask_gigachat
+        
+        prompt = f"""
+Ты AI-тренер по фитнесу. Отвечай кратко, дружелюбно, давай практические советы.
+
+Данные пользователя:
+- Возраст: {user.get('age', 'не указан')}
+- Вес: {user.get('weight', 'не указан')} кг
+- Рост: {user.get('height', 'не указан')} см
+- Цель: {user.get('goal', 'не указана')}
+- Ограничения/травмы: {user.get('injuries', 'нет')}
+
+Вопрос пользователя: {question}
+
+Ответ:
+"""
+        try:
+            answer = ask_gigachat(prompt)
+            return jsonify({'answer': answer})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    return render_template('chat.html', user=user)
 
 if __name__ == '__main__':
     app.run(debug=True)
