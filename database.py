@@ -13,25 +13,40 @@ def create_user(username, password, name, age, height, weight, goal, activity, r
                 body_type=None, meals_per_day=None, eating_schedule=None,
                 favorite_foods=None, disliked_foods=None, food_budget=None,
                 neck=None, chest=None, waist=None, hip=None, thigh=None,
-                knee=None, ankle=None, biceps=None, forearm=None, wrist=None):
+                knee=None, ankle=None, biceps=None, forearm=None, wrist=None,
+                specialization=None, experience=None, about=None, certifications=None, price_per_hour=None):
     """Создать нового пользователя"""
     conn = get_db_connection()
     cur = conn.cursor()
     hashed = generate_password_hash(password)
+    
     cur.execute("""
-        INSERT INTO users (username, password, name, age, height, weight, goal, activity, role, subscription,
-                           equipment, injuries, chronic_diseases, problem_zones, allergies,
-                           preferences, wake_time, sleep_time,
-                           body_type, meals_per_day, eating_schedule,
-                           favorite_foods, disliked_foods, food_budget,
-                           neck, chest, waist, hip, thigh, knee, ankle, biceps, forearm, wrist)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """, (username, hashed, name, age, height, weight, goal, activity, role, subscription,
-          equipment, injuries, chronic_diseases, problem_zones, allergies,
-          preferences, wake_time, sleep_time,
-          body_type, meals_per_day, eating_schedule,
-          favorite_foods, disliked_foods, food_budget,
-          neck, chest, waist, hip, thigh, knee, ankle, biceps, forearm, wrist))
+        INSERT INTO users (
+            username, password, name, age, height, weight, goal, activity, role, subscription,
+            equipment, injuries, chronic_diseases, problem_zones, allergies,
+            preferences, wake_time, sleep_time,
+            body_type, meals_per_day, eating_schedule,
+            favorite_foods, disliked_foods, food_budget,
+            neck, chest, waist, hip, thigh, knee, ankle, biceps, forearm, wrist,
+            specialization, experience, about, certifications, price_per_hour
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s,
+                %s, %s, %s,
+                %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s)
+        RETURNING id
+    """, (
+        username, hashed, name, age, height, weight, goal, activity, role, subscription,
+        equipment, injuries, chronic_diseases, problem_zones, allergies,
+        preferences, wake_time, sleep_time,
+        body_type, meals_per_day, eating_schedule,
+        favorite_foods, disliked_foods, food_budget,
+        neck, chest, waist, hip, thigh, knee, ankle, biceps, forearm, wrist,
+        specialization, experience, about, certifications, price_per_hour
+    ))
     user_id = cur.fetchone()[0]
     conn.commit()
     conn.close()
@@ -52,7 +67,9 @@ def get_user_by_username(username):
             'favorite_foods', 'disliked_foods', 'food_budget',
             'equipment', 'injuries', 'chronic_diseases', 'problem_zones',
             'allergies', 'preferences', 'wake_time', 'sleep_time',
-            'subscription'
+            'subscription', 'neck', 'chest', 'waist', 'hip', 'thigh',
+            'knee', 'ankle', 'biceps', 'forearm', 'wrist',
+            'specialization', 'experience', 'about', 'certifications', 'price_per_hour'
         ]
         return dict(zip(columns, user))
     return None
@@ -72,7 +89,9 @@ def get_user_by_id(user_id):
             'favorite_foods', 'disliked_foods', 'food_budget',
             'equipment', 'injuries', 'chronic_diseases', 'problem_zones',
             'allergies', 'preferences', 'wake_time', 'sleep_time',
-            'subscription'
+            'subscription', 'neck', 'chest', 'waist', 'hip', 'thigh',
+            'knee', 'ankle', 'biceps', 'forearm', 'wrist',
+            'specialization', 'experience', 'about', 'certifications', 'price_per_hour'
         ]
         return dict(zip(columns, user))
     return None
@@ -106,6 +125,7 @@ def update_user_profile(user_id, name, age, height, weight, goal, activity,
           user_id))
     conn.commit()
     conn.close()
+
 def save_posture_analysis(user_id, shoulder_slope, hip_slope, head_tilt, posture_score,
                           kyphosis=None, neck_angle=None, knee_valgus=None, symmetry=None,
                           original_photo_path=None, analyzed_photo_path=None,
@@ -113,7 +133,6 @@ def save_posture_analysis(user_id, shoulder_slope, hip_slope, head_tilt, posture
     """Сохранить анализ осанки с расширенными метриками и фото"""
     conn = get_db_connection()
     cur = conn.cursor()
-    
     cur.execute("""
         INSERT INTO posture_analyses 
         (user_id, shoulder_slope, hip_slope, head_tilt, posture_score,
@@ -127,23 +146,18 @@ def save_posture_analysis(user_id, shoulder_slope, hip_slope, head_tilt, posture
     ))
     conn.commit()
     conn.close()
+
 def save_body_composition(user_id, body_fat, muscle_mass, water, visceral_fat):
     """Сохранить анализ состава тела"""
     conn = get_db_connection()
     cur = conn.cursor()
-    
-    # Конвертируем numpy типы в обычные Python
-    def to_python(val):
-        if hasattr(val, 'item'):
-            return val.item()
-        return val
-    
     cur.execute("""
         INSERT INTO body_composition (user_id, body_fat, muscle_mass, water, visceral_fat)
         VALUES (%s, %s, %s, %s, %s)
-    """, (user_id, to_python(body_fat), to_python(muscle_mass), water, visceral_fat))
+    """, (user_id, body_fat, muscle_mass, water, visceral_fat))
     conn.commit()
     conn.close()
+
 def save_daily_health(user_id, steps, sleep_hours, weight=None):
     """Сохранить данные о шагах и сне"""
     from datetime import date
@@ -240,7 +254,6 @@ def get_progress_data(user_id, days=30):
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Данные состава тела (жир, мышцы)
     cur.execute("""
         SELECT created_at::date, body_fat, muscle_mass
         FROM body_composition
@@ -250,7 +263,6 @@ def get_progress_data(user_id, days=30):
     """, (user_id, days))
     body_data = cur.fetchall()
     
-    # Данные активности (шаги, сон)
     cur.execute("""
         SELECT date, steps, sleep_hours
         FROM daily_health
@@ -262,7 +274,6 @@ def get_progress_data(user_id, days=30):
     
     conn.close()
     
-    # Форматируем данные для графиков
     result = {
         'dates': [],
         'body_fat': [],
@@ -271,50 +282,54 @@ def get_progress_data(user_id, days=30):
         'sleep': []
     }
     
-    # Обрабатываем данные состава тела
     for row in body_data:
-        date_str = row[0].strftime('%d.%m')
-        result['dates'].append(date_str)
+        result['dates'].append(row[0].strftime('%d.%m'))
         result['body_fat'].append(round(float(row[1]), 1) if row[1] else None)
         result['muscle_mass'].append(round(float(row[2]), 1) if row[2] else None)
     
-    # Обрабатываем данные активности
     for row in activity_data:
         date_str = row[0].strftime('%d.%m')
-        result['steps'].append({
-            'date': date_str,
-            'value': row[1] or 0
-        })
-        result['sleep'].append({
-            'date': date_str,
-            'value': round(float(row[2]), 1) if row[2] else 0
-        })
+        result['steps'].append({'date': date_str, 'value': row[1] or 0})
+        result['sleep'].append({'date': date_str, 'value': round(float(row[2]), 1) if row[2] else 0})
     
-    # Сортируем шаги и сон по датам
     result['steps'] = sorted(result['steps'], key=lambda x: x['date'])
     result['sleep'] = sorted(result['sleep'], key=lambda x: x['date'])
     
     return result
+
+def log_user_activity(user_id, action, page=None, details=None):
+    """Логирование действий пользователя"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            INSERT INTO user_activity_logs (user_id, action, page, details)
+            VALUES (%s, %s, %s, %s)
+        """, (user_id, action, page, details))
+        conn.commit()
+        print(f"📝 Logged: {user_id} - {action} - {page}")
+    except Exception as e:
+        print(f"Log error: {e}")
+    finally:
+        conn.close()
+
 def save_workout_program(user_id, program_data, days_per_week=3, version=1, is_active=True):
     """Сохранить программу тренировок"""
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Деактивируем старую активную программу
     cur.execute("""
         UPDATE workout_programs 
         SET is_active = FALSE 
         WHERE user_id = %s AND is_active = TRUE
     """, (user_id,))
     
-    # Считаем новую версию
     cur.execute("""
         SELECT COALESCE(MAX(version), 0) + 1 
         FROM workout_programs WHERE user_id = %s
     """, (user_id,))
     new_version = cur.fetchone()[0]
     
-    # Сохраняем новую
     cur.execute("""
         INSERT INTO workout_programs (user_id, program_data, days_per_week, version, is_active)
         VALUES (%s, %s, %s, %s, %s)
@@ -351,21 +366,18 @@ def save_meal_plan(user_id, plan_data, version=1, is_active=True):
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Деактивируем старую активную программу
     cur.execute("""
         UPDATE meal_plans 
         SET is_active = FALSE 
         WHERE user_id = %s AND is_active = TRUE
     """, (user_id,))
     
-    # Считаем новую версию
     cur.execute("""
         SELECT COALESCE(MAX(version), 0) + 1 
         FROM meal_plans WHERE user_id = %s
     """, (user_id,))
     new_version = cur.fetchone()[0]
     
-    # Сохраняем новую
     cur.execute("""
         INSERT INTO meal_plans (user_id, plan_data, version, is_active)
         VALUES (%s, %s, %s, %s)
@@ -419,21 +431,7 @@ def get_meal_plan_history(user_id, limit=10):
             'is_active': row[3]
         })
     return result
-def log_user_activity(user_id, action, page=None, details=None):
-    """Логирование действий пользователя"""
-    conn = get_db_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute("""
-            INSERT INTO user_activity_logs (user_id, action, page, details)
-            VALUES (%s, %s, %s, %s)
-        """, (user_id, action, page, details))
-        conn.commit()
-        print(f"📝 Logged: {user_id} - {action} - {page}")
-    except Exception as e:
-        print(f"Log error: {e}")
-    finally:
-        conn.close()
+
 def get_previous_posture_analysis(user_id):
     """Получить предыдущий анализ осанки (не последний)"""
     conn = get_db_connection()
@@ -478,12 +476,12 @@ def get_previous_body_composition(user_id):
             'date': row[3]
         }
     return None
+
 def predict_progress(user_id):
     """Прогноз прогресса на основе истории анализов"""
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Получаем историю % жира
     cur.execute("""
         SELECT created_at, body_fat
         FROM body_composition
@@ -492,7 +490,6 @@ def predict_progress(user_id):
     """, (user_id,))
     body_fat_history = cur.fetchall()
     
-    # Получаем историю веса из daily_health
     cur.execute("""
         SELECT date, weight
         FROM daily_health
@@ -505,7 +502,6 @@ def predict_progress(user_id):
     
     result = {}
     
-    # Прогноз % жира
     if len(body_fat_history) >= 2:
         changes = []
         for i in range(1, len(body_fat_history)):
@@ -519,7 +515,6 @@ def predict_progress(user_id):
             result['body_fat'] = round(max(10, min(45, predicted_fat)), 1)
             result['body_fat_trend'] = '⬇️ снижается' if avg_change > 0 else '⬆️ растёт'
     
-    # Прогноз веса
     if len(weight_history) >= 2:
         changes = []
         for i in range(1, len(weight_history)):
@@ -531,18 +526,19 @@ def predict_progress(user_id):
             last_weight = weight_history[-1][1] if weight_history[-1][1] else 70
             predicted_weight = last_weight - (avg_change * 4)
             result['weight'] = round(max(40, min(150, predicted_weight)), 1)
+    
+    return result
+
 def check_achievements(user_id):
     """Проверяет и выдаёт достижения"""
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Получаем уже полученные достижения
     cur.execute("SELECT achievement_type FROM achievements WHERE user_id = %s", (user_id,))
     existing = {row[0] for row in cur.fetchall()}
     
     new_achievements = []
     
-    # 1. Первый анализ
     if 'first_analysis' not in existing:
         cur.execute("SELECT COUNT(*) FROM posture_analyses WHERE user_id = %s", (user_id,))
         count = cur.fetchone()[0]
@@ -550,7 +546,6 @@ def check_achievements(user_id):
             cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'first_analysis')", (user_id,))
             new_achievements.append('🏆 Первый анализ осанки!')
     
-    # 2. Первый чат
     if 'first_chat' not in existing:
         cur.execute("SELECT COUNT(*) FROM user_activity_logs WHERE user_id = %s AND action = 'chat'", (user_id,))
         count = cur.fetchone()[0]
@@ -558,7 +553,6 @@ def check_achievements(user_id):
             cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'first_chat')", (user_id,))
             new_achievements.append('💬 Первый диалог с AI-тренером!')
     
-    # 3. 7 дней шагов
     if 'steps_7_days' not in existing:
         cur.execute("""
             SELECT COUNT(DISTINCT date) FROM daily_health 
@@ -569,51 +563,216 @@ def check_achievements(user_id):
             cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'steps_7_days')", (user_id,))
             new_achievements.append('👣 7 дней активности подряд!')
     
-    # 4. Первый анализ видео
     if 'first_video_analysis' not in existing:
         cur.execute("SELECT COUNT(*) FROM exercise_analyses WHERE user_id = %s", (user_id,))
         count = cur.fetchone()[0]
         if count >= 1:
             cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'first_video_analysis')", (user_id,))
             new_achievements.append('🎥 Первый анализ техники!')
-    # 5. 5 тренировок
-    if 'five_workouts' not in existing:
-        cur.execute("SELECT COUNT(*) FROM workout_programs WHERE user_id = %s", (user_id,))
-        count = cur.fetchone()[0]
-        if count >= 5:
-            cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'five_workouts')", (user_id,))
-            new_achievements.append('💪 5 сгенерированных программ!')
     
-    # 6. 3 плана питания
-    if 'three_meals' not in existing:
-        cur.execute("SELECT COUNT(*) FROM meal_plans WHERE user_id = %s", (user_id,))
-        count = cur.fetchone()[0]
-        if count >= 3:
-            cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'three_meals')", (user_id,))
-            new_achievements.append('🍎 3 плана питания!')
-    
-    # 7. Идеальная осанка
-    if 'perfect_posture' not in existing:
-        cur.execute("SELECT posture_score FROM posture_analyses WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (user_id,))
-        row = cur.fetchone()
-        if row and row[0] >= 9:
-            cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'perfect_posture')", (user_id,))
-            new_achievements.append('🎯 Идеальная осанка!')
-    
-    # 8. Снижение жира на 2%
-    if 'fat_loss' not in existing:
-        cur.execute("SELECT body_fat FROM body_composition WHERE user_id = %s ORDER BY created_at ASC LIMIT 1", (user_id,))
-        first = cur.fetchone()
-        cur.execute("SELECT body_fat FROM body_composition WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (user_id,))
-        last = cur.fetchone()
-        if first and last and first[0] and last[0] and (first[0] - last[0]) >= 2:
-            cur.execute("INSERT INTO achievements (user_id, achievement_type) VALUES (%s, 'fat_loss')", (user_id,))
-            new_achievements.append('🔥 Снижение жира на 2%!')
-    
-    return new_achievements    
     conn.commit()
     conn.close()
     
     return new_achievements
+
+def get_trainer_clients(trainer_id):
+    """Получить список клиентов тренера"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT u.id, u.username, u.name, u.age, u.height, u.weight, u.goal, tc.created_at
+        FROM trainer_clients tc
+        JOIN users u ON tc.client_id = u.id
+        WHERE tc.trainer_id = %s AND tc.is_active = TRUE
+        ORDER BY tc.created_at DESC
+    """, (trainer_id,))
+    rows = cur.fetchall()
+    conn.close()
     
-    return result
+    clients = []
+    for row in rows:
+        clients.append({
+            'id': row[0],
+            'username': row[1],
+            'name': row[2],
+            'age': row[3],
+            'height': row[4],
+            'weight': row[5],
+            'goal': row[6],
+            'since': row[7]
+        })
+    return clients
+
+def get_client_progress(client_id, trainer_id=None):
+    """Получить прогресс клиента для тренера"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT posture_score, shoulder_slope, hip_slope, head_tilt, created_at
+        FROM posture_analyses
+        WHERE user_id = %s
+        ORDER BY created_at DESC LIMIT 1
+    """, (client_id,))
+    posture = cur.fetchone()
+    
+    cur.execute("""
+        SELECT body_fat, muscle_mass, visceral_fat, created_at
+        FROM body_composition
+        WHERE user_id = %s
+        ORDER BY created_at DESC LIMIT 1
+    """, (client_id,))
+    composition = cur.fetchone()
+    
+    cur.execute("""
+        SELECT AVG(steps), AVG(sleep_hours)
+        FROM daily_health
+        WHERE user_id = %s AND date >= CURRENT_DATE - INTERVAL '7 days'
+    """, (client_id,))
+    health = cur.fetchone()
+    
+    conn.close()
+    
+    return {
+        'last_posture': {
+            'score': posture[0] if posture else None,
+            'shoulder': posture[1] if posture else None,
+            'hip': posture[2] if posture else None,
+            'head': posture[3] if posture else None,
+            'date': posture[4] if posture else None
+        } if posture else None,
+        'last_composition': {
+            'body_fat': composition[0] if composition else None,
+            'muscle_mass': composition[1] if composition else None,
+            'visceral_fat': composition[2] if composition else None,
+            'date': composition[3] if composition else None
+        } if composition else None,
+        'avg_steps': round(health[0], 0) if health and health[0] else 0,
+        'avg_sleep': round(health[1], 1) if health and health[1] else 0
+    }
+
+def get_trainer_stats(trainer_id):
+    """Получить статистику тренера"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT COUNT(*) FROM trainer_clients
+        WHERE trainer_id = %s AND is_active = TRUE
+    """, (trainer_id,))
+    clients_count = cur.fetchone()[0]
+    
+    try:
+        cur.execute("""
+            SELECT COALESCE(AVG(rating), 0), COUNT(*) FROM reviews
+            WHERE trainer_id = %s
+        """, (trainer_id,))
+        rating_row = cur.fetchone()
+        avg_rating = round(rating_row[0], 1) if rating_row and rating_row[0] else 0
+        reviews_count = rating_row[1] if rating_row and rating_row[1] else 0
+    except Exception:
+        avg_rating = 0
+        reviews_count = 0
+    
+    cur.execute("""
+        SELECT COALESCE(SUM(amount), 0) FROM trainer_earnings
+        WHERE trainer_id = %s AND status = 'paid'
+    """, (trainer_id,))
+    earnings = cur.fetchone()[0] or 0
+    
+    conn.close()
+    
+    return {
+        'clients_count': clients_count,
+        'avg_rating': avg_rating,
+        'reviews_count': reviews_count,
+        'total_earnings': float(earnings)
+    }
+
+def send_message(sender_id, receiver_id, message):
+    """Отправить сообщение"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO messages (sender_id, receiver_id, message)
+        VALUES (%s, %s, %s)
+    """, (sender_id, receiver_id, message))
+    conn.commit()
+    conn.close()
+
+def get_messages(user1_id, user2_id, limit=50):
+    """Получить переписку между двумя пользователями"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT sender_id, receiver_id, message, created_at
+        FROM messages
+        WHERE (sender_id = %s AND receiver_id = %s)
+           OR (sender_id = %s AND receiver_id = %s)
+        ORDER BY created_at ASC
+        LIMIT %s
+    """, (user1_id, user2_id, user2_id, user1_id, limit))
+    rows = cur.fetchall()
+    conn.close()
+    
+    messages = []
+    for row in rows:
+        messages.append({
+            'sender_id': row[0],
+            'receiver_id': row[1],
+            'message': row[2],
+            'created_at': row[3]
+        })
+    return messages
+
+def get_unread_count(user_id):
+    """Получить количество непрочитанных сообщений"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM messages WHERE receiver_id = %s AND is_read = FALSE", (user_id,))
+    count = cur.fetchone()[0]
+    conn.close()
+    return count
+
+def mark_as_read(user_id, sender_id):
+    """Отметить сообщения как прочитанные"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE messages SET is_read = TRUE
+        WHERE receiver_id = %s AND sender_id = %s
+    """, (user_id, sender_id))
+    conn.commit()
+    conn.close()
+def save_review(client_id, trainer_id, rating, comment):
+    """Сохранить отзыв"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO reviews (client_id, trainer_id, rating, comment)
+        VALUES (%s, %s, %s, %s)
+    """, (client_id, trainer_id, rating, comment))
+    conn.commit()
+    conn.close()
+def get_client_trainer(client_id):
+    """Получить тренера клиента"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT u.id, u.username, u.name, u.specialization, u.experience, u.about
+        FROM trainer_clients tc
+        JOIN users u ON tc.trainer_id = u.id
+        WHERE tc.client_id = %s AND tc.is_active = TRUE
+    """, (client_id,))
+    row = cur.fetchone()
+    conn.close()
+    if row:
+        return {
+            'id': row[0],
+            'username': row[1],
+            'name': row[2],
+            'specialization': row[3],
+            'experience': row[4],
+            'about': row[5]
+        }
+    return None

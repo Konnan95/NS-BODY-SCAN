@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Кабинет тренера - NS Body Scan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/modern.css">
+    <style>
+        .trainer-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 24px;
+            text-align: center;
+        }
+        .stat-card h4 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .client-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .client-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .client-info h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .client-info p {
+            font-size: 13px;
+            color: #718096;
+        }
+        .client-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+        }
+        .client-stats span {
+            color: #667eea;
+            font-weight: 600;
+        }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+        .rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #f7fafc;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .stars {
+            color: #fbbf24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h1>🧠 NS Body Scan</h1>
+            </div>
+            <div class="menu">
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/profile">👤 Профиль</a>
+                <a href="/analyze">🔍 Анализ</a>
+                <a href="/chat">🤖 AI-чат</a>
+                <a href="/logout">🚪 Выйти</a>
+            </div>
+        </div>
+
+        <h2>👨‍🏫 Кабинет тренера</h2>
+        <p>Добро пожаловать, {{ user.name or user.username }}! Управляйте своими клиентами и отслеживайте их прогресс.</p>
+
+        <!-- Статистика -->
+        <div class="trainer-stats">
+            <div class="stat-card">
+                <h4>👥 Клиентов</h4>
+                <div class="value">{{ stats.clients_count }}</div>
+            </div>
+            <div class="stat-card">
+                <h4>⭐ Рейтинг</h4>
+                <div class="value">{{ stats.avg_rating }}</div>
+                <div class="rating">
+                    {% for i in range(stats.avg_rating|int) %}★{% endfor %}
+                    {% for i in range(5 - stats.avg_rating|int) %}☆{% endfor %}
+                    ({{ stats.reviews_count }})
+                </div>
+            </div>
+            <div class="stat-card">
+                <h4>💰 Заработано</h4>
+                <div class="value">{{ "{:,.0f}".format(stats.total_earnings) }} ₽</div>
+            </div>
+        </div>
+
+        <h3>📋 Мои клиенты</h3>
+
+        {% if clients %}
+            {% for client in clients %}
+            <div class="client-card">
+                <div class="client-info">
+                    <h4>{{ client.name or client.username }}</h4>
+                    <p>{{ client.age }} лет • {{ client.height }} см • {{ client.weight }} кг</p>
+                    <p>🎯 Цель: 
+                        {% if client.goal == 'lose' %}Похудение
+                        {% elif client.goal == 'gain' %}Набор массы
+                        {% elif client.goal == 'posture' %}Коррекция осанки
+                        {% else %}Подтянутое тело{% endif %}
+                    </p>
+                    <p class="client-stats">
+                        📅 С {{ client.since.strftime('%d.%m.%Y') }}
+                    </p>
+                </div>
+                <div>
+                    <a href="/trainer/client/{{ client.id }}" class="btn btn-sm">📊 Подробнее</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <p>😕 У вас пока нет клиентов</p>
+                <p>Клиенты появятся после оформления подписки "Живой тренер"</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

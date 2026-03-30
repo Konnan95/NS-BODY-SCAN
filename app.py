@@ -15,6 +15,7 @@ from video_analyzer_mediapipe import video_analyzer
 from decorators import require_subscription
 from tts_helper import voice_trainer
 from pose_comparator import pose_comparator
+from trainer_routes import trainer_dashboard, trainer_client, edit_client_program, edit_client_meal, leave_review
 import cv2
 import os
 
@@ -358,5 +359,79 @@ def chat():
     
     return render_template('chat.html', user=user)
 
+# Кабинет тренера
+app.add_url_rule('/trainer/dashboard', 'trainer_dashboard', trainer_dashboard)
+app.add_url_rule('/trainer/client/<int:client_id>', 'trainer_client', trainer_client)
+app.add_url_rule('/trainer/client/<int:client_id>/edit_program', 
+                 'edit_client_program', edit_client_program, methods=['GET', 'POST'])
+app.add_url_rule('/trainer/client/<int:client_id>/edit_meal', 
+                 'edit_client_meal', edit_client_meal, methods=['GET', 'POST'])
+@app.route('/chat_trainer/<int:client_id>')
+def chat_trainer(client_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import get_user_by_id, get_messages, mark_as_read
+    user = get_user_by_id(session['user_id'])
+    client = get_user_by_id(client_id)
+    
+    # Отмечаем сообщения как прочитанные
+    mark_as_read(session['user_id'], client_id)
+    
+    messages = get_messages(session['user_id'], client_id)
+    
+    return render_template('chat_trainer.html', 
+                          user=user, 
+                          client=client, 
+                          messages=messages)
+
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    receiver_id = request.form.get('receiver_id', type=int)
+    message = request.form.get('message', '')
+    
+    if not message:
+        return jsonify({'success': False, 'error': 'Empty message'}), 400
+    
+    from database import send_message as send_msg
+    send_msg(session['user_id'], receiver_id, message)
+    
+    return jsonify({'success': True})
+
+@app.route('/get_messages')
+def get_messages_route():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    with_user = request.args.get('with', type=int)
+    if not with_user:
+        return jsonify({'success': False, 'error': 'No user specified'}), 400
+    
+    from database import get_messages
+    messages = get_messages(session['user_id'], with_user)
+    
+    return jsonify({'messages': messages})
+
+app.add_url_rule('/trainer/client/<int:client_id>/review/<int:trainer_id>', 
+                 'leave_review', leave_review, methods=['GET', 'POST']) 
+@app.route('/chat_client/<int:trainer_id>')
+def chat_client(trainer_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import get_user_by_id, get_messages, mark_as_read
+    user = get_user_by_id(session['user_id'])
+    trainer = get_user_by_id(trainer_id)
+    
+    mark_as_read(session['user_id'], trainer_id)
+    messages = get_messages(session['user_id'], trainer_id)
+    
+    return render_template('chat_client.html', 
+                          user=user, 
+                          trainer=trainer, 
+                          messages=messages)
 if __name__ == '__main__':
     app.run(debug=True)

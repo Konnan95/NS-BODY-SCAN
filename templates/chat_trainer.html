@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Чат с клиентом - NS Body Scan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/modern.css">
+    <style>
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            background: #f8f9fa;
+            margin: 20px 0;
+        }
+        .message {
+            margin: 10px 0;
+            display: flex;
+        }
+        .message-sent {
+            justify-content: flex-end;
+        }
+        .message-received {
+            justify-content: flex-start;
+        }
+        .message-content {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 20px;
+        }
+        .message-sent .message-content {
+            background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%);
+            color: white;
+        }
+        .message-received .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e2e8f0;
+        }
+        .message-time {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 25px;
+        }
+        .input-area button {
+            padding: 12px 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h1>🧠 NS Body Scan</h1>
+            </div>
+            <div class="menu">
+                <a href="/trainer/dashboard">👨‍🏫 Мои клиенты</a>
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/logout">🚪 Выйти</a>
+            </div>
+        </div>
+
+        <h2>💬 Чат с клиентом</h2>
+        <p><strong>{{ client.name or client.username }}</strong></p>
+
+        <div class="chat-container" id="chatContainer">
+            {% for msg in messages %}
+            <div class="message {% if msg.sender_id == user.id %}message-sent{% else %}message-received{% endif %}">
+                <div class="message-content">
+                    {{ msg.message }}
+                    <div class="message-time">{{ msg.created_at.strftime('%H:%M') }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Введите сообщение..." onkeypress="if(event.keyCode==13) sendMessage()">
+            <button onclick="sendMessage()">📤 Отправить</button>
+        </div>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        scrollToBottom();
+        
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Добавляем сообщение на страницу
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message message-sent';
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    ${escapeHtml(message)}
+                    <div class="message-time">Только что</div>
+                </div>
+            `;
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+            
+            // Отправляем на сервер
+            fetch('/send_message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `receiver_id={{ client.id }}&message=${encodeURIComponent(message)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    alert('Ошибка отправки');
+                }
+            });
+            
+            messageInput.value = '';
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Автообновление каждые 3 секунды
+        setInterval(() => {
+            fetch('/get_messages?with={{ client.id }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.messages) {
+                    // Обновляем чат
+                    location.reload();
+                }
+            });
+        }, 3000);
+    </script>
+</body>
+</html>
