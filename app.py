@@ -16,7 +16,8 @@ from decorators import require_subscription
 from tts_helper import voice_trainer
 from pose_comparator import pose_comparator
 from trainer_routes import trainer_dashboard, trainer_client, edit_client_program, edit_client_meal, leave_review
-from admin_routes import admin_dashboard, admin_users
+from admin_routes import admin_dashboard, admin_users, export_admin_stats
+from database import get_user_by_id, get_trainer_clients
 import cv2
 import os
 
@@ -367,80 +368,17 @@ app.add_url_rule('/trainer/client/<int:client_id>/edit_program',
                  'edit_client_program', edit_client_program, methods=['GET', 'POST'])
 app.add_url_rule('/trainer/client/<int:client_id>/edit_meal', 
                  'edit_client_meal', edit_client_meal, methods=['GET', 'POST'])
-@app.route('/chat_trainer/<int:client_id>')
-def chat_trainer(client_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    from database import get_user_by_id, get_messages, mark_as_read
-    user = get_user_by_id(session['user_id'])
-    client = get_user_by_id(client_id)
-    
-    # Отмечаем сообщения как прочитанные
-    mark_as_read(session['user_id'], client_id)
-    
-    messages = get_messages(session['user_id'], client_id)
-    
-    return render_template('chat_trainer.html', 
-                          user=user, 
-                          client=client, 
-                          messages=messages)
-
-@app.route('/send_message', methods=['POST'])
-def send_message():
-    if 'user_id' not in session:
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    receiver_id = request.form.get('receiver_id', type=int)
-    message = request.form.get('message', '')
-    
-    if not message:
-        return jsonify({'success': False, 'error': 'Empty message'}), 400
-    
-    from database import send_message as send_msg
-    send_msg(session['user_id'], receiver_id, message)
-    
-    return jsonify({'success': True})
-
-@app.route('/get_messages')
-def get_messages_route():
-    if 'user_id' not in session:
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    with_user = request.args.get('with', type=int)
-    if not with_user:
-        return jsonify({'success': False, 'error': 'No user specified'}), 400
-    
-    from database import get_messages
-    messages = get_messages(session['user_id'], with_user)
-    
-    return jsonify({'messages': messages})
-
 app.add_url_rule('/trainer/client/<int:client_id>/review/<int:trainer_id>', 
-                 'leave_review', leave_review, methods=['GET', 'POST']) 
-@app.route('/chat_client/<int:trainer_id>')
-def chat_client(trainer_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    from database import get_user_by_id, get_messages, mark_as_read
-    user = get_user_by_id(session['user_id'])
-    trainer = get_user_by_id(trainer_id)
-    
-    mark_as_read(session['user_id'], trainer_id)
-    messages = get_messages(session['user_id'], trainer_id)
-    
-    return render_template('chat_client.html', 
-                          user=user, 
-                          trainer=trainer, 
-                          messages=messages)
+                 'leave_review', leave_review, methods=['GET', 'POST'])
+
 # Админка
 app.add_url_rule('/admin/dashboard', 'admin_dashboard', admin_dashboard)
 app.add_url_rule('/admin/users', 'admin_users', admin_users, methods=['GET', 'POST'])
+app.add_url_rule('/admin/export_stats', 'export_admin_stats', export_admin_stats)
 
+# Вход для админа
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    """Отдельный вход для администратора"""
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -459,5 +397,141 @@ def admin_login():
             flash('Неверный логин, пароль или недостаточно прав', 'danger')
     
     return render_template('admin_login.html')
+
+# Чат тренера с клиентом
+@app.route('/chat_trainer/<int:client_id>')
+def chat_trainer(client_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import get_user_by_id, get_messages, mark_as_read
+    user = get_user_by_id(session['user_id'])
+    client = get_user_by_id(client_id)
+    
+    mark_as_read(session['user_id'], client_id)
+    messages = get_messages(session['user_id'], client_id)
+    
+    return render_template('chat_trainer.html', user=user, client=client, messages=messages)
+
+# Список чатов для тренера
+@app.route('/chat_trainer_list')
+def chat_trainer_list():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = get_user_by_id(session['user_id'])
+    
+    if user.get('role') != 'trainer':
+        flash('Доступ только для тренеров', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    clients = get_trainer_clients(session['user_id'])
+    
+    return render_template('chat_trainer_list.html', user=user, clients=clients)
+
+# Чат клиента с тренером
+@app.route('/chat_client/<int:trainer_id>')
+def chat_client(trainer_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import get_user_by_id, get_messages, mark_as_read
+    user = get_user_by_id(session['user_id'])
+    trainer = get_user_by_id(trainer_id)
+    
+    mark_as_read(session['user_id'], trainer_id)
+    messages = get_messages(session['user_id'], trainer_id)
+    
+    return render_template('chat_client.html', user=user, trainer=trainer, messages=messages)
+
+# Отправка сообщения
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    receiver_id = request.form.get('receiver_id', type=int)
+    message = request.form.get('message', '')
+    
+    if not message:
+        return jsonify({'success': False, 'error': 'Empty message'}), 400
+    
+    from database import send_message as send_msg
+    send_msg(session['user_id'], receiver_id, message)
+    
+    return jsonify({'success': True})
+
+# Получение сообщений
+@app.route('/get_messages')
+def get_messages_route():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    with_user = request.args.get('with', type=int)
+    if not with_user:
+        return jsonify({'success': False, 'error': 'No user specified'}), 400
+    
+    from database import get_messages
+    messages = get_messages(session['user_id'], with_user)
+    
+    return jsonify({'messages': messages})
+
+from datetime import datetime, timedelta
+import calendar
+
+@app.route('/calendar')
+def calendar_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = get_user_by_id(session['user_id'])
+    
+    # Текущий месяц
+    now = datetime.now()
+    year = request.args.get('year', now.year, type=int)
+    month = request.args.get('month', now.month, type=int)
+    
+    from database import get_calendar_workouts
+    workouts = get_calendar_workouts(session['user_id'], year, month)
+    
+    # Календарь
+    cal = calendar.monthcalendar(year, month)
+    month_name = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'][month-1]
+    
+    return render_template('calendar.html', 
+                          user=user,
+                          calendar=cal,
+                          year=year,
+                          month=month,
+                          month_name=month_name,
+                          workouts=workouts)
+
+@app.route('/add_workout', methods=['POST'])
+def add_workout():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    date = request.form.get('date')
+    exercise_name = request.form.get('exercise_name')
+    sets = request.form.get('sets', type=int)
+    reps = request.form.get('reps', type=int)
+    
+    from database import add_calendar_workout
+    add_calendar_workout(session['user_id'], date, exercise_name, sets, reps)
+    
+    flash('Тренировка добавлена!', 'success')
+    return redirect(url_for('calendar_page', year=date[:4], month=date[5:7]))
+
+@app.route('/toggle_workout/<int:workout_id>')
+def toggle_workout(workout_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import toggle_workout_completed
+    toggle_workout_completed(workout_id)
+    
+    return redirect(request.referrer or url_for('calendar_page'))
+
 if __name__ == '__main__':
     app.run(debug=True)

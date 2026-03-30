@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Админ-панель - NS Body Scan</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -30,6 +31,51 @@
             font-weight: 700;
             color: #667eea;
         }
+        .stat-card .trend {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .trend-up { color: #48bb78; }
+        .trend-down { color: #f56565; }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .chart-card h3 {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .subscription-list {
+            list-style: none;
+            padding: 0;
+        }
+        .subscription-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .top-trainers {
+            margin-top: 15px;
+        }
+        .top-trainer {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .export-btn {
+            margin-bottom: 20px;
+            text-align: right;
+        }
     </style>
 </head>
 <body>
@@ -49,73 +95,128 @@
         <h2>📊 Админ-панель</h2>
         <p>Добро пожаловать, {{ user.name or user.username }}!</p>
 
+        <div class="export-btn">
+            <a href="/admin/export_stats" class="btn">📥 Скачать статистику (CSV)</a>
+        </div>
+
         <div class="stats-grid">
             <div class="stat-card">
                 <h4>👥 Всего пользователей</h4>
-                <div class="value">{{ stats.total_users }}</div>
+                <div class="value">{{ metrics.total_users if metrics else 0 }}</div>
+                <div class="trend trend-up">+{{ metrics.new_week if metrics else 0 }} за неделю</div>
             </div>
             <div class="stat-card">
-                <h4>👨‍🏫 Тренеров</h4>
-                <div class="value">{{ stats.total_trainers }}</div>
+                <h4>📈 Активных (7 дней)</h4>
+                <div class="value">{{ metrics.active_users if metrics else 0 }}</div>
+                <div class="trend">{{ (metrics.active_users / metrics.total_users * 100)|round(1) if metrics and metrics.total_users else 0 }}% от всех</div>
             </div>
             <div class="stat-card">
-                <h4>👤 Клиентов</h4>
-                <div class="value">{{ stats.total_clients }}</div>
+                <h4>💰 Конверсия в платные</h4>
+                <div class="value">{{ metrics.conversion if metrics else 0 }}%</div>
+                <div class="trend">платных пользователей</div>
             </div>
             <div class="stat-card">
-                <h4>📐 Анализов осанки</h4>
-                <div class="value">{{ stats.total_posture }}</div>
-            </div>
-            <div class="stat-card">
-                <h4>🧬 Анализов состава</h4>
-                <div class="value">{{ stats.total_composition }}</div>
-            </div>
-            <div class="stat-card">
-                <h4>🏋️ Программ тренировок</h4>
-                <div class="value">{{ stats.total_workouts }}</div>
-            </div>
-            <div class="stat-card">
-                <h4>🥗 Планов питания</h4>
-                <div class="value">{{ stats.total_meals }}</div>
-            </div>
-            <div class="stat-card">
-                <h4>💬 Сообщений</h4>
-                <div class="value">{{ stats.total_messages }}</div>
-            </div>
-            <div class="stat-card">
-                <h4>⭐ Отзывов</h4>
-                <div class="value">{{ stats.total_reviews }}</div>
+                <h4>⭐ Средний рейтинг тренеров</h4>
+                <div class="value">{{ metrics.avg_rating if metrics else 0 }}</div>
+                <div class="trend">из 5</div>
             </div>
         </div>
 
-        <div class="card">
-            <h3>📋 Последние пользователи</h3>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Имя</th>
-                        <th>Логин</th>
-                        <th>Роль</th>
-                        <th>Подписка</th>
-                        <th>Дата регистрации</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for u in users[:10] %}
-                    <tr>
-                        <td>{{ u.id }}</td>
-                        <td>{{ u.name or '—' }}</td>
-                        <td>{{ u.username }}</td>
-                        <td>{{ u.role }}</td>
-                        <td>{{ u.subscription }}</td>
-                        <td>{{ u.created_at.strftime('%d.%m.%Y') if u.created_at else '—' }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <a href="/admin/users" class="btn" style="margin-top: 15px;">👥 Все пользователи</a>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>📊 Активность пользователей по дням</h3>
+                <canvas id="activityChart" style="max-height: 250px;"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>💰 Распределение подписок</h3>
+                <canvas id="subscriptionChart" style="max-height: 250px;"></canvas>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>📊 Анализы</h3>
+                <ul class="subscription-list">
+                    <li><span>📐 Анализов осанки</span><strong>{{ metrics.total_posture if metrics else 0 }}</strong></li>
+                    <li><span>🧬 Анализов состава тела</span><strong>{{ metrics.total_composition if metrics else 0 }}</strong></li>
+                    <li><span>🎥 Анализов техники</span><strong>{{ metrics.total_exercise if metrics else 0 }}</strong></li>
+                    <li><span>🏋️ Программ тренировок</span><strong>{{ stats.total_workouts if stats else 0 }}</strong></li>
+                    <li><span>🥗 Планов питания</span><strong>{{ stats.total_meals if stats else 0 }}</strong></li>
+                </ul>
+            </div>
+            <div class="chart-card">
+                <h3>🏆 Топ-тренеры</h3>
+                <div class="top-trainers">
+                    {% if metrics.top_trainers %}
+                        {% for t in metrics.top_trainers %}
+                        <div class="top-trainer">
+                            <span>{{ loop.index }}. {{ t.name }}</span>
+                            <strong>{{ t.clients }} клиентов</strong>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>Нет данных</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3>📋 Распределение по тарифам</h3>
+            <ul class="subscription-list">
+                <li><span>🌟 Бесплатный</span><strong>{{ metrics.subscriptions.get('free', 0) if metrics else 0 }}</strong></li>
+                <li><span>🤖 AI-помощник</span><strong>{{ metrics.subscriptions.get('ai_assistant', 0) if metrics else 0 }}</strong></li>
+                <li><span>🏆 AI+тренер</span><strong>{{ metrics.subscriptions.get('ai_trainer', 0) if metrics else 0 }}</strong></li>
+                <li><span>👨‍🏫 Живой тренер</span><strong>{{ metrics.subscriptions.get('human_trainer', 0) if metrics else 0 }}</strong></li>
+            </ul>
         </div>
     </div>
+
+    <script>
+    const activityData = {{ metrics.daily_activity|tojson if metrics else [] }};
+    if (activityData.length > 0) {
+        new Chart(document.getElementById('activityChart'), {
+            type: 'line',
+            data: {
+                labels: activityData.map(d => d.date),
+                datasets: [{
+                    label: 'Активные пользователи',
+                    data: activityData.map(d => d.users),
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
+        });
+    }
+
+    const subscriptions = {{ metrics.subscriptions|tojson if metrics else {} }};
+    const subLabels = {
+        'free': 'Бесплатный',
+        'ai_assistant': 'AI-помощник',
+        'ai_trainer': 'AI+тренер',
+        'human_trainer': 'Живой тренер'
+    };
+    const subData = Object.entries(subscriptions).map(([key, value]) => ({
+        label: subLabels[key] || key,
+        value: value
+    }));
+    
+    if (subData.length > 0) {
+        new Chart(document.getElementById('subscriptionChart'), {
+            type: 'pie',
+            data: {
+                labels: subData.map(d => d.label),
+                datasets: [{
+                    data: subData.map(d => d.value),
+                    backgroundColor: ['#e2e8f0', '#667eea', '#764ba2', '#ff66b5']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+    </script>
 </body>
 </html>

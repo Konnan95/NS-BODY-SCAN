@@ -3,7 +3,7 @@
 """
 
 from flask import request, redirect, url_for, session, flash, render_template, jsonify
-from database import get_user_by_id, save_posture_analysis, save_body_composition, save_workout_program, save_meal_plan, get_db_connection
+from database import get_user_by_id, save_posture_analysis, save_body_composition, save_workout_program, save_meal_plan, get_db_connection, add_calendar_workout
 from posture_analyzer import analyze_posture, save_analyzed_photo, save_original_photo
 from config import UPLOAD_FOLDER
 import os
@@ -15,7 +15,7 @@ from body_fat_predictor_sklearn import body_fat_predictor
 from bodypix_analyzer import bodypix
 from exercise_translations import translate_exercise_name
 from decorators import get_user_limit
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def extract_exercises_from_text(text):
@@ -238,6 +238,24 @@ def analyze_page():
             
             # Извлекаем упражнения
             extracted_exercises = extract_exercises_from_text(workout_plan_text)
+            
+            # Автоматическое добавление в календарь
+            if extracted_exercises:
+                today = datetime.now()
+                weekdays = ['monday', 'wednesday', 'friday']
+                day_offset = {'monday': 0, 'wednesday': 2, 'friday': 4}
+                
+                for i, ex in enumerate(extracted_exercises[:9]):
+                    day_type = weekdays[i % 3]
+                    workout_date = today + timedelta(days=day_offset[day_type])
+                    add_calendar_workout(
+                        user_id=user['id'],
+                        date=workout_date.strftime('%Y-%m-%d'),
+                        exercise_name=ex['name'],
+                        sets=3,
+                        reps=12
+                    )
+                print(f"✅ Добавлено {len(extracted_exercises[:9])} упражнений в календарь")
             
             # Добавляем GIF для упражнений
             exercises_with_media = []

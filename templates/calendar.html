@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Календарь тренировок - NS Body Scan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/modern.css">
+    <style>
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+        .calendar-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .calendar-table th {
+            padding: 15px;
+            text-align: center;
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+        .calendar-table td {
+            border: 1px solid #e2e8f0;
+            vertical-align: top;
+            height: 100px;
+            width: 14%;
+            transition: 0.2s;
+        }
+        .calendar-day {
+            padding: 8px;
+            cursor: pointer;
+            height: 100%;
+            position: relative;
+        }
+        .calendar-day:hover {
+            background: #f7fafc;
+        }
+        .day-number {
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
+        .day-workouts {
+            font-size: 11px;
+        }
+        .workout-item {
+            background: #ff66b5;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 12px;
+            margin: 2px 0;
+            display: inline-block;
+            font-size: 10px;
+            cursor: pointer;
+        }
+        .workout-item.completed {
+            background: #48bb78;
+            text-decoration: line-through;
+        }
+        .other-month {
+            background: #f7fafc;
+            color: #a0aec0;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 400px;
+            max-width: 90%;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
+        .add-workout-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%);
+            color: white;
+            border: none;
+            font-size: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: 0.2s;
+        }
+        .add-workout-btn:hover {
+            transform: scale(1.05);
+        }
+        .stats-summary {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .stat-badge {
+            background: #f7fafc;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 14px;
+        }
+        .stat-badge .count {
+            font-weight: 700;
+            color: #ff66b5;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h1>🧠 NS Body Scan</h1>
+            </div>
+            <div class="menu">
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/profile">👤 Профиль</a>
+                <a href="/analyze">🔍 Анализ</a>
+                <a href="/logout">🚪 Выйти</a>
+            </div>
+        </div>
+
+        <h2>📅 Календарь тренировок</h2>
+        <p>Планируйте тренировки и отмечайте выполненные!</p>
+
+        <div class="stats-summary">
+            <div class="stat-badge">
+                📊 Всего тренировок: <span class="count" id="totalWorkouts">0</span>
+            </div>
+            <div class="stat-badge">
+            <div class="stat-badge">
+                ✅ Выполнено: <span class="count" id="completedWorkouts">0</span>
+            </div>
+            <div class="stat-badge">
+                📈 Процент выполнения: <span class="count" id="completionRate">0</span>%
+            </div>
+        </div>
+
+        <div class="calendar-header">
+            <h3>{{ month_name }} {{ year }}</h3>
+            <div class="calendar-nav">
+                <a href="?year={{ year }}&month={{ month-1 if month > 1 else 12 }}" class="btn">← Предыдущий</a>
+                <a href="?year={{ year }}&month={{ month+1 if month < 12 else 1 }}" class="btn">Следующий →</a>
+                <a href="?year={{ year }}&month={{ month }}" class="btn">📅 Сегодня</a>
+            </div>
+        </div>
+
+        <table class="calendar-table">
+            <thead>
+                <tr>
+                    <th>ПН</th>
+                    <th>ВТ</th>
+                    <th>СР</th>
+                    <th>ЧТ</th>
+                    <th>ПТ</th>
+                    <th>СБ</th>
+                    <th>ВС</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for week in calendar %}
+                <tr>
+                    {% for day in week %}
+                    <td class="{% if day == 0 %}other-month{% endif %}">
+                        {% if day != 0 %}
+                        <div class="calendar-day" onclick="openAddModal('{{ year }}-{{ month }}-{{ day }}')">
+                            <div class="day-number">{{ day }}</div>
+                            <div class="day-workouts" id="day-{{ year }}-{{ month }}-{{ day }}">
+                                {% set date_str = '%04d-%02d-%02d'|format(year, month, day) %}
+                                {% if workouts and workouts.get(date_str) %}
+                                    {% for w in workouts.get(date_str) %}
+                                    <div class="workout-item {% if w.completed %}completed{% endif %}" 
+                                         onclick="event.stopPropagation(); toggleWorkout({{ w.id }})">
+                                        {{ w.exercise }} ({{ w.sets }}x{{ w.reps }})
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Модальное окно для добавления тренировки -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h3>➕ Добавить тренировку</h3>
+            <input type="hidden" id="workoutDate">
+            <input type="text" id="exerciseName" placeholder="Упражнение" required>
+            <input type="number" id="sets" placeholder="Подходы" required>
+            <input type="number" id="reps" placeholder="Повторения" required>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="saveWorkout()" class="btn">💾 Сохранить</button>
+                <button onclick="closeModal()" class="btn btn-secondary">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="add-workout-btn" onclick="openAddModalToday()">+</button>
+
+    <script>
+        const modal = document.getElementById('addModal');
+        
+        function openAddModal(date) {
+            document.getElementById('workoutDate').value = date;
+            document.getElementById('exerciseName').value = '';
+            document.getElementById('sets').value = '';
+            document.getElementById('reps').value = '';
+            modal.style.display = 'flex';
+        }
+        
+        function openAddModalToday() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            openAddModal(`${year}-${month}-${day}`);
+        }
+        
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+        
+        function saveWorkout() {
+            const date = document.getElementById('workoutDate').value;
+            const exerciseName = document.getElementById('exerciseName').value;
+            const sets = document.getElementById('sets').value;
+            const reps = document.getElementById('reps').value;
+            
+            fetch('/add_workout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `date=${date}&exercise_name=${encodeURIComponent(exerciseName)}&sets=${sets}&reps=${reps}`
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Ошибка при добавлении');
+                }
+            });
+        }
+        
+        function toggleWorkout(workoutId) {
+            fetch(`/toggle_workout/${workoutId}`)
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+        }
+        
+        // Подсчёт статистики
+        const workoutItems = document.querySelectorAll('.workout-item');
+        const totalWorkouts = workoutItems.length;
+        const completedWorkouts = document.querySelectorAll('.workout-item.completed').length;
+        const completionRate = totalWorkouts > 0 ? Math.round(completedWorkouts / totalWorkouts * 100) : 0;
+        
+        document.getElementById('totalWorkouts').innerText = totalWorkouts;
+        document.getElementById('completedWorkouts').innerText = completedWorkouts;
+        document.getElementById('completionRate').innerText = completionRate;
+        
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

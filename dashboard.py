@@ -43,17 +43,29 @@ def dashboard_page():
     
     # Получаем достижения
     achievements = check_achievements(session['user_id'])
-
+    
+    # Получаем тренера клиента (если есть)
+    client_trainer = None
+    if user.get('role') == 'user':
+        client_trainer = get_client_trainer(session['user_id'])
+    
     # Получаем статистику для администратора
     admin_stats = None
     if user.get('role') == 'admin':
         from database import get_system_stats
         admin_stats = get_system_stats()
     
-    # Получаем тренера клиента (если есть)
-    client_trainer = None
-    if user.get('role') == 'user':
-        client_trainer = get_client_trainer(session['user_id'])
+    # Получаем количество непрочитанных сообщений
+    unread_count_ai = 0
+    unread_count_trainer = 0
+    unread_count_client = 0
+    
+    if user.get('role') == 'trainer':
+        from database import get_unread_count
+        unread_count_trainer = get_unread_count(session['user_id'])
+    elif user.get('role') == 'user' and client_trainer:
+        from database import get_unread_count
+        unread_count_client = get_unread_count(session['user_id'])
     
     log_user_activity(session['user_id'], 'view', '/dashboard')
     
@@ -71,4 +83,8 @@ def dashboard_page():
                           last_body_fat=last_body_fat,
                           progress_forecast=progress_forecast,
                           achievements=achievements,
-                          client_trainer=client_trainer, stats=admin_stats)
+                          client_trainer=client_trainer,
+                          stats=admin_stats,
+                          unread_count_ai=unread_count_ai,
+                          unread_count_trainer=unread_count_trainer,
+                          unread_count_client=unread_count_client)

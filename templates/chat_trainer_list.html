@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Чаты с клиентами - NS Body Scan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/modern.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h1>🧠 NS Body Scan</h1>
+            </div>
+            <div class="menu">
+                <a href="/trainer/dashboard">👨‍🏫 Мои клиенты</a>
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/logout">🚪 Выйти</a>
+            </div>
+        </div>
+
+        <h2>💬 Чаты с клиентами</h2>
+
+        {% if clients %}
+            {% for client in clients %}
+            <div class="card">
+                <h3>{{ client.name or client.username }}</h3>
+                <p>📅 Клиент с {{ client.since.strftime('%d.%m.%Y') if client.since else 'недавно' }}</p>
+                <a href="/chat_trainer/{{ client.id }}" class="btn">💬 Написать</a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>У вас пока нет клиентов</p>
+        {% endif %}
+    </div>
+</body>
+</html>

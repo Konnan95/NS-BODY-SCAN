@@ -871,3 +871,153 @@ def delete_user(user_id):
     cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
     conn.commit()
     conn.close()
+def get_admin_metrics():
+    """Получить расширенные метрики для админки"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Всего пользователей
+    cur.execute("SELECT COUNT(*) FROM users")
+    total_users = cur.fetchone()[0]
+    
+    # Новых за неделю
+    cur.execute("""
+        SELECT COUNT(*) FROM users 
+        WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
+    """)
+    new_week = cur.fetchone()[0]
+    
+    # Новых за месяц
+    cur.execute("""
+        SELECT COUNT(*) FROM users 
+        WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+    """)
+    new_month = cur.fetchone()[0]
+    
+    # Активные пользователи (заходили за 7 дней)
+    cur.execute("""
+        SELECT COUNT(DISTINCT user_id) FROM user_activity_logs 
+        WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
+    """)
+    active_users = cur.fetchone()[0] or 0
+    
+    # Распределение по подпискам
+    cur.execute("""
+        SELECT subscription, COUNT(*) FROM users 
+        GROUP BY subscription
+    """)
+    subscriptions = dict(cur.fetchall())
+    
+    # Конверсия в платные
+    total_paid = subscriptions.get('ai_assistant', 0) + subscriptions.get('ai_trainer', 0) + subscriptions.get('human_trainer', 0)
+    conversion = round(total_paid / total_users * 100, 1) if total_users > 0 else 0
+    
+    # Всего анализов осанки
+    cur.execute("SELECT COUNT(*) FROM posture_analyses")
+    total_posture = cur.fetchone()[0]
+    
+    # Всего анализов состава тела
+    cur.execute("SELECT COUNT(*) FROM body_composition")
+    total_composition = cur.fetchone()[0]
+    
+    # Всего анализов техники
+    cur.execute("SELECT COUNT(*) FROM exercise_analyses")
+    total_exercise = cur.fetchone()[0]
+    
+    # Всего тренеров
+    cur.execute("SELECT COUNT(*) FROM users WHERE role = 'trainer'")
+    total_trainers = cur.fetchone()[0]
+    
+    # Средний рейтинг тренеров
+    cur.execute("SELECT AVG(rating) FROM reviews")
+    avg_rating = cur.fetchone()[0] or 0
+    
+    # Топ-тренеры по клиентам
+    cur.execute("""
+        SELECT u.name, u.username, COUNT(tc.client_id) as clients_count
+        FROM trainer_clients tc
+        JOIN users u ON tc.trainer_id = u.id
+        GROUP BY u.id
+        ORDER BY clients_count DESC
+        LIMIT 5
+    """)
+    top_trainers = cur.fetchall()
+    
+    # Активность по дням (за последние 7 дней)
+    cur.execute("""
+        SELECT DATE(created_at) as date, COUNT(DISTINCT user_id)
+        FROM user_activity_logs
+        WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY DATE(created_at)
+        ORDER BY date
+    """)
+    daily_activity = cur.fetchall()
+    
+    conn.close()
+    
+    return {
+        'total_users': total_users,
+        'new_week': new_week,
+        'new_month': new_month,
+        'active_users': active_users,
+        'subscriptions': subscriptions,
+        'conversion': conversion,
+        'total_posture': total_posture,
+        'total_composition': total_composition,
+        'total_exercise': total_exercise,
+        'total_trainers': total_trainers,
+        'avg_rating': round(avg_rating, 1),
+        'top_trainers': [{'name': t[0] or t[1], 'clients': t[2]} for t in top_trainers],
+        'daily_activity': [{'date': d[0].strftime('%d.%m'), 'users': d[1]} for d in daily_activity]
+    }
+def get_calendar_workouts(user_id, year, month):
+    """Получить тренировки на месяц"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT workout_date, exercise_name, sets, reps, completed, id
+        FROM calendar_workouts
+        WHERE user_id = %s 
+        AND EXTRACT(YEAR FROM workout_date) = %s
+        AND EXTRACT(MONTH FROM workout_date) = %s
+        ORDER BY workout_date ASC
+    """, (user_id, year, month))
+    rows = cur.fetchall()
+    conn.close()
+    
+    workouts = {}
+    for row in rows:
+        date = row[0].strftime('%Y-%m-%d')
+        if date not in workouts:
+            workouts[date] = []
+        workouts[date].append({
+            'exercise': row[1],
+            'sets': row[2],
+            'reps': row[3],
+            'completed': row[4],
+            'id': row[5]
+        })
+    return workouts
+
+def add_calendar_workout(user_id, date, exercise_name, sets, reps):
+    """Добавить тренировку в календарь"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO calendar_workouts (user_id, workout_date, exercise_name, sets, reps)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (user_id, date, exercise_name, sets, reps))
+    conn.commit()
+    conn.close()
+
+def toggle_workout_completed(workout_id):
+    """Отметить тренировку как выполненную/невыполненную"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE calendar_workouts 
+        SET completed = NOT completed 
+        WHERE id = %s
+    """, (workout_id,))
+    conn.commit()
+    conn.close()

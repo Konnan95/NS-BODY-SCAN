@@ -86,21 +86,44 @@
                 <h1>🧠 NS Body Scan</h1>
             </div>
             <div class="menu">
-                <a href="/dashboard">🏠 Главная</a>
-                <a href="/profile">👤 Профиль</a>
-                {% if user.role != 'trainer' and user.role != 'admin' %}
-                <a href="/analyze">🔍 Анализ</a>
-                <a href="/history">📜 История</a>
-                <a href="/health">🏃‍♀️ Шаги/Сон</a>
-                <a href="/chat">🤖 AI-чат</a>
-                {% endif %}
-                {% if user.role == 'admin' %}
-                <a href="/admin/dashboard">👑 Админка</a>
-                {% endif %}
-                <a href="/pricing">💰 Тарифы</a>
-                <button onclick="toggleTheme()" class="btn" style="background: none; color: #ff66b5; padding: 8px 12px;">🌙</button>
-                <a href="/logout">🚪 Выйти</a>
-            </div>
+    <a href="/dashboard">🏠 Главная</a>
+    <a href="/profile">👤 Профиль</a>
+    {% if user.role != 'trainer' and user.role != 'admin' %}
+    <a href="/analyze">🔍 Анализ</a>
+    <a href="/history">📜 История</a>
+    <a href="/health">🏃‍♀️ Шаги/Сон</a>
+    <a href="/calendar">📅 Календарь</a>
+    <a href="/chat" style="position: relative;">
+        🤖 AI-чат
+        {% if unread_count_ai > 0 %}
+        <span style="position: absolute; top: -8px; right: -12px; background: #ff66b5; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px;">{{ unread_count_ai }}</span>
+        {% endif %}
+    </a>
+    {% endif %}
+    {% if user.role == 'admin' %}
+    <a href="/admin/dashboard">👑 Админка</a>
+    {% endif %}
+    {% if user.role == 'trainer' %}
+    <a href="/trainer/dashboard">👨‍🏫 Мои клиенты</a>
+    <a href="/chat_trainer_list" style="position: relative;">
+        💬 Чаты
+        {% if unread_count_trainer > 0 %}
+        <span style="position: absolute; top: -8px; right: -12px; background: #ff66b5; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px;">{{ unread_count_trainer }}</span>
+        {% endif %}
+    </a>
+    {% endif %}
+    {% if user.role == 'user' and client_trainer %}
+    <a href="/chat_client/{{ client_trainer.id }}" style="position: relative;">
+        💬 Чат с тренером
+        {% if unread_count_client > 0 %}
+        <span style="position: absolute; top: -8px; right: -12px; background: #ff66b5; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px;">{{ unread_count_client }}</span>
+        {% endif %}
+    </a>
+    {% endif %}
+    <a href="/pricing">💰 Тарифы</a>
+    <button onclick="toggleTheme()" class="btn" style="background: none; color: #ff66b5; padding: 8px 12px;">🌙</button>
+    <a href="/logout">🚪 Выйти</a>
+</div>
         </div>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
