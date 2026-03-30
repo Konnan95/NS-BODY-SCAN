@@ -43,6 +43,12 @@ def dashboard_page():
     
     # Получаем достижения
     achievements = check_achievements(session['user_id'])
+
+    # Получаем статистику для администратора
+    admin_stats = None
+    if user.get('role') == 'admin':
+        from database import get_system_stats
+        admin_stats = get_system_stats()
     
     # Получаем тренера клиента (если есть)
     client_trainer = None
@@ -65,4 +71,4 @@ def dashboard_page():
                           last_body_fat=last_body_fat,
                           progress_forecast=progress_forecast,
                           achievements=achievements,
-                          client_trainer=client_trainer)
+                          client_trainer=client_trainer, stats=admin_stats)

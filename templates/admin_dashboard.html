@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Админ-панель - NS Body Scan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/modern.css">
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .stat-card h4 {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 8px;
+        }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h1>🧠 NS Body Scan</h1>
+            </div>
+            <div class="menu">
+                <a href="/admin/dashboard">📊 Админка</a>
+                <a href="/admin/users">👥 Пользователи</a>
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/logout">🚪 Выйти</a>
+            </div>
+        </div>
+
+        <h2>📊 Админ-панель</h2>
+        <p>Добро пожаловать, {{ user.name or user.username }}!</p>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h4>👥 Всего пользователей</h4>
+                <div class="value">{{ stats.total_users }}</div>
+            </div>
+            <div class="stat-card">
+                <h4>👨‍🏫 Тренеров</h4>
+                <div class="value">{{ stats.total_trainers }}</div>
+            </div>
+            <div class="stat-card">
+                <h4>👤 Клиентов</h4>
+                <div class="value">{{ stats.total_clients }}</div>
+            </div>
+            <div class="stat-card">
+                <h4>📐 Анализов осанки</h4>
+                <div class="value">{{ stats.total_posture }}</div>
+            </div>
+            <div class="stat-card">
+                <h4>🧬 Анализов состава</h4>
+                <div class="value">{{ stats.total_composition }}</div>
+            </div>
+            <div class="stat-card">
+                <h4>🏋️ Программ тренировок</h4>
+                <div class="value">{{ stats.total_workouts }}</div>
+            </div>
+            <div class="stat-card">
+                <h4>🥗 Планов питания</h4>
+                <div class="value">{{ stats.total_meals }}</div>
+            </div>
+            <div class="stat-card">
+                <h4>💬 Сообщений</h4>
+                <div class="value">{{ stats.total_messages }}</div>
+            </div>
+            <div class="stat-card">
+                <h4>⭐ Отзывов</h4>
+                <div class="value">{{ stats.total_reviews }}</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📋 Последние пользователи</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя</th>
+                        <th>Логин</th>
+                        <th>Роль</th>
+                        <th>Подписка</th>
+                        <th>Дата регистрации</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users[:10] %}
+                    <tr>
+                        <td>{{ u.id }}</td>
+                        <td>{{ u.name or '—' }}</td>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.role }}</td>
+                        <td>{{ u.subscription }}</td>
+                        <td>{{ u.created_at.strftime('%d.%m.%Y') if u.created_at else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <a href="/admin/users" class="btn" style="margin-top: 15px;">👥 Все пользователи</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -51,6 +51,32 @@
             font-weight: 700;
             color: #667eea;
         }
+        .admin-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .admin-card h3 {
+            color: white;
+        }
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .admin-stat {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 16px;
+            text-align: center;
+        }
+        .admin-stat .value {
+            font-size: 28px;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -62,11 +88,14 @@
             <div class="menu">
                 <a href="/dashboard">🏠 Главная</a>
                 <a href="/profile">👤 Профиль</a>
-                {% if user.role != 'trainer' %}
+                {% if user.role != 'trainer' and user.role != 'admin' %}
                 <a href="/analyze">🔍 Анализ</a>
                 <a href="/history">📜 История</a>
                 <a href="/health">🏃‍♀️ Шаги/Сон</a>
                 <a href="/chat">🤖 AI-чат</a>
+                {% endif %}
+                {% if user.role == 'admin' %}
+                <a href="/admin/dashboard">👑 Админка</a>
                 {% endif %}
                 <a href="/pricing">💰 Тарифы</a>
                 <button onclick="toggleTheme()" class="btn" style="background: none; color: #ff66b5; padding: 8px 12px;">🌙</button>
@@ -82,8 +111,47 @@
         
         <h2>Привет, {{ user.name or user.username }}! 👋</h2>
         
-        <!-- Для КЛИЕНТА: блок с тренером -->
-        {% if user.role == 'user' and client_trainer %}
+        <!-- ========== ДЛЯ АДМИНИСТРАТОРА ========== -->
+{% if user.role == 'admin' %}
+<div class="admin-card">
+    <h3>👑 Админ-панель</h3>
+    <p>Управление пользователями, просмотр статистики и аналитики</p>
+    <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+        <a href="/admin/dashboard" class="btn" style="background: white; color: #667eea;">📊 Статистика</a>
+        <a href="/admin/users" class="btn" style="background: white; color: #667eea;">👥 Пользователи</a>
+    </div>
+</div>
+
+<!-- Для АДМИНИСТРАТОРА: показываем краткую статистику -->
+<div class="card">
+    <h3>📈 Краткая статистика</h3>
+    <div class="admin-stats">
+        <div class="admin-stat">
+            <div class="value">{{ stats.total_users if stats else 0 }}</div>
+            <div>👥 Пользователей</div>
+        </div>
+        <div class="admin-stat">
+            <div class="value">{{ stats.total_trainers if stats else 0 }}</div>
+            <div>👨‍🏫 Тренеров</div>
+        </div>
+        <div class="admin-stat">
+            <div class="value">{{ stats.total_clients if stats else 0 }}</div>
+            <div>👤 Клиентов</div>
+        </div>
+        <div class="admin-stat">
+            <div class="value">{{ stats.total_posture if stats else 0 }}</div>
+            <div>📐 Анализов</div>
+        </div>
+    </div>
+    <a href="/admin/dashboard" class="btn" style="margin-top: 10px;">📊 Полная статистика</a>
+</div>
+{% endif %}
+        
+        <!-- ========== ДЛЯ КЛИЕНТА ========== -->
+        {% if user.role == 'user' %}
+        
+        <!-- Блок с тренером -->
+        {% if client_trainer %}
         <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
             <h3 style="color: white;">👨‍🏫 Ваш тренер</h3>
             <p><strong>{{ client_trainer.name or client_trainer.username }}</strong></p>
@@ -102,56 +170,6 @@
             </div>
         </div>
         {% endif %}
-        
-        <!-- Для ТРЕНЕРА: упрощённый дашборд -->
-        {% if user.role == 'trainer' %}
-        <div class="trainer-welcome">
-            <h3 style="color: white;">👨‍🏫 Добро пожаловать в кабинет тренера!</h3>
-            <p>Здесь вы можете управлять своими клиентами и отслеживать их прогресс.</p>
-        </div>
-        
-        <div class="trainer-stats">
-            <div class="trainer-stat-card">
-                <h4>👥 Клиентов</h4>
-                <div class="value">{{ stats.clients_count if stats else 0 }}</div>
-            </div>
-            <div class="trainer-stat-card">
-                <h4>⭐ Рейтинг</h4>
-                <div class="value">{{ stats.avg_rating if stats else 0 }}</div>
-                <small>({{ stats.reviews_count if stats else 0 }} отзывов)</small>
-            </div>
-            <div class="trainer-stat-card">
-                <h4>💰 Заработано</h4>
-                <div class="value">{{ "{:,.0f}".format(stats.total_earnings if stats else 0) }} ₽</div>
-            </div>
-        </div>
-        
-        <div class="grid">
-            <div class="card">
-                <h3>👨‍🏫 Кабинет тренера</h3>
-                <p>Управляйте клиентами, просматривайте их прогресс и создавайте программы</p>
-                <a href="/trainer/dashboard" class="btn">📊 Перейти в кабинет</a>
-            </div>
-            
-            <div class="card">
-                <h3>📊 Ваши данные</h3>
-                <p>📏 Рост: {{ user.height or '—' }} см</p>
-                <p>⚖️ Вес: {{ user.weight or '—' }} кг</p>
-                <p>🎂 Возраст: {{ user.age or '—' }} лет</p>
-                <p>⭐ Роль: Тренер</p>
-                <a href="/profile" class="btn">✏️ Редактировать профиль</a>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h3>📋 Ваши клиенты</h3>
-            <p>Перейдите в кабинет тренера для управления клиентами</p>
-            <a href="/trainer/dashboard" class="btn">👥 Список клиентов</a>
-        </div>
-        
-        {% else %}
-        
-        <!-- ========== ДЛЯ КЛИЕНТА ========== -->
         
         <!-- Сравнение с предыдущим анализом -->
         {% if (prev_posture and last_score) or (prev_composition and last_body_fat) %}
@@ -444,14 +462,59 @@
         </div>
         
         {% endif %}
-        <!-- Конец блока для клиента -->
+        
+        <!-- ========== ДЛЯ ТРЕНЕРА ========== -->
+        {% if user.role == 'trainer' %}
+        <div class="trainer-welcome">
+            <h3 style="color: white;">👨‍🏫 Добро пожаловать в кабинет тренера!</h3>
+            <p>Здесь вы можете управлять своими клиентами и отслеживать их прогресс.</p>
+        </div>
+        
+        <div class="trainer-stats">
+            <div class="trainer-stat-card">
+                <h4>👥 Клиентов</h4>
+                <div class="value">{{ stats.clients_count if stats else 0 }}</div>
+            </div>
+            <div class="trainer-stat-card">
+                <h4>⭐ Рейтинг</h4>
+                <div class="value">{{ stats.avg_rating if stats else 0 }}</div>
+                <small>({{ stats.reviews_count if stats else 0 }} отзывов)</small>
+            </div>
+            <div class="trainer-stat-card">
+                <h4>💰 Заработано</h4>
+                <div class="value">{{ "{:,.0f}".format(stats.total_earnings if stats else 0) }} ₽</div>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>👨‍🏫 Кабинет тренера</h3>
+                <p>Управляйте клиентами, просматривайте их прогресс и создавайте программы</p>
+                <a href="/trainer/dashboard" class="btn">📊 Перейти в кабинет</a>
+            </div>
+            
+            <div class="card">
+                <h3>📊 Ваши данные</h3>
+                <p>📏 Рост: {{ user.height or '—' }} см</p>
+                <p>⚖️ Вес: {{ user.weight or '—' }} кг</p>
+                <p>🎂 Возраст: {{ user.age or '—' }} лет</p>
+                <p>⭐ Роль: Тренер</p>
+                <a href="/profile" class="btn">✏️ Редактировать профиль</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>📋 Ваши клиенты</h3>
+            <p>Перейдите в кабинет тренера для управления клиентами</p>
+            <a href="/trainer/dashboard" class="btn">👥 Список клиентов</a>
+        </div>
+        {% endif %}
         
     </div>
     
     <script>
     const progress = {{ progress|tojson }};
     
-    // График процента жира
     if (progress.body_fat && progress.body_fat.length > 0 && document.getElementById('bodyFatChart')) {
         new Chart(document.getElementById('bodyFatChart'), {
             type: 'line',
@@ -470,7 +533,6 @@
         });
     }
     
-    // График мышечной массы
     if (progress.muscle_mass && progress.muscle_mass.length > 0 && document.getElementById('muscleMassChart')) {
         new Chart(document.getElementById('muscleMassChart'), {
             type: 'line',
@@ -489,7 +551,6 @@
         });
     }
     
-    // График шагов
     if (progress.steps && progress.steps.length > 0 && document.getElementById('stepsChart')) {
         const stepsLabels = progress.steps.map(item => item.date);
         const stepsValues = progress.steps.map(item => item.value);
@@ -509,7 +570,6 @@
         });
     }
     
-    // График сна
     if (progress.sleep && progress.sleep.length > 0 && document.getElementById('sleepChart')) {
         const sleepLabels = progress.sleep.map(item => item.date);
         const sleepValues = progress.sleep.map(item => item.value);
@@ -534,7 +594,6 @@
         });
     }
     
-    // Тёмная тема
     function toggleTheme() {
         document.body.classList.toggle('dark-theme');
         localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');

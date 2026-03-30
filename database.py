@@ -776,3 +776,98 @@ def get_client_trainer(client_id):
             'about': row[5]
         }
     return None
+def get_all_users(limit=100):
+    """Получить всех пользователей для админки"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, username, name, role, subscription, created_at
+        FROM users
+        ORDER BY created_at DESC
+        LIMIT %s
+    """, (limit,))
+    rows = cur.fetchall()
+    conn.close()
+    
+    users = []
+    for row in rows:
+        users.append({
+            'id': row[0],
+            'username': row[1],
+            'name': row[2],
+            'role': row[3],
+            'subscription': row[4],
+            'created_at': row[5]
+        })
+    return users
+
+def get_system_stats():
+    """Получить статистику системы"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Всего пользователей
+    cur.execute("SELECT COUNT(*) FROM users")
+    total_users = cur.fetchone()[0]
+    
+    # Тренеров
+    cur.execute("SELECT COUNT(*) FROM users WHERE role = 'trainer'")
+    total_trainers = cur.fetchone()[0]
+    
+    # Клиентов
+    cur.execute("SELECT COUNT(*) FROM users WHERE role = 'user'")
+    total_clients = cur.fetchone()[0]
+    
+    # Всего анализов осанки
+    cur.execute("SELECT COUNT(*) FROM posture_analyses")
+    total_posture = cur.fetchone()[0]
+    
+    # Всего анализов состава тела
+    cur.execute("SELECT COUNT(*) FROM body_composition")
+    total_composition = cur.fetchone()[0]
+    
+    # Всего программ тренировок
+    cur.execute("SELECT COUNT(*) FROM workout_programs")
+    total_workouts = cur.fetchone()[0]
+    
+    # Всего планов питания
+    cur.execute("SELECT COUNT(*) FROM meal_plans")
+    total_meals = cur.fetchone()[0]
+    
+    # Всего сообщений
+    cur.execute("SELECT COUNT(*) FROM messages")
+    total_messages = cur.fetchone()[0]
+    
+    # Всего отзывов
+    cur.execute("SELECT COUNT(*) FROM reviews")
+    total_reviews = cur.fetchone()[0]
+    
+    conn.close()
+    
+    return {
+        'total_users': total_users,
+        'total_trainers': total_trainers,
+        'total_clients': total_clients,
+        'total_posture': total_posture,
+        'total_composition': total_composition,
+        'total_workouts': total_workouts,
+        'total_meals': total_meals,
+        'total_messages': total_messages,
+        'total_reviews': total_reviews
+    }
+
+def update_user_role(user_id, new_role):
+    """Изменить роль пользователя"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE users SET role = %s WHERE id = %s", (new_role, user_id))
+    conn.commit()
+    conn.close()
+
+def delete_user(user_id):
+    """Удалить пользователя"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+    conn.commit()
+    conn.close()

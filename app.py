@@ -16,6 +16,7 @@ from decorators import require_subscription
 from tts_helper import voice_trainer
 from pose_comparator import pose_comparator
 from trainer_routes import trainer_dashboard, trainer_client, edit_client_program, edit_client_meal, leave_review
+from admin_routes import admin_dashboard, admin_users
 import cv2
 import os
 
@@ -433,5 +434,30 @@ def chat_client(trainer_id):
                           user=user, 
                           trainer=trainer, 
                           messages=messages)
+# Админка
+app.add_url_rule('/admin/dashboard', 'admin_dashboard', admin_dashboard)
+app.add_url_rule('/admin/users', 'admin_users', admin_users, methods=['GET', 'POST'])
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    """Отдельный вход для администратора"""
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        from database import get_user_by_username
+        from werkzeug.security import check_password_hash
+        
+        user = get_user_by_username(username)
+        
+        if user and user.get('role') == 'admin' and check_password_hash(user['password'], password):
+            session['user_id'] = user['id']
+            session['is_admin'] = True
+            flash('Вход в админ-панель выполнен!', 'success')
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Неверный логин, пароль или недостаточно прав', 'danger')
+    
+    return render_template('admin_login.html')
 if __name__ == '__main__':
     app.run(debug=True)

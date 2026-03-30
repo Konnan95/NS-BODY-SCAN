@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Вход в админ-панель - NS Body Scan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/modern.css">
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container login-container">
+        <div class="logo" style="text-align: center;">
+            <h1>🧠 NS Body Scan</h1>
+            <p>Вход в админ-панель</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="post">
+            <input type="text" name="username" placeholder="Логин администратора" required>
+            <input type="password" name="password" placeholder="Пароль" required>
+            <button type="submit" class="btn">Войти</button>
+        </form>
+        
+        <p style="text-align: center; margin-top: 20px;"><a href="/login">← На главную</a></p>
+    </div>
+</body>
+</html>
