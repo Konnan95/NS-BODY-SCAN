@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Дневник питания - NS Body Scan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/modern.css">
+    <style>
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+        .search-result-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .search-result-item:hover {
+            background: #f7fafc;
+        }
+        .meal-section {
+            margin-bottom: 30px;
+        }
+        .meal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .food-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+        .food-info {
+            flex: 1;
+        }
+        .food-name {
+            font-weight: 600;
+        }
+        .food-stats {
+            font-size: 12px;
+            color: #718096;
+        }
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #f56565;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .daily-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+            text-align: center;
+        }
+        .summary-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .add-food-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%);
+            color: white;
+            border: none;
+            font-size: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            width: 400px;
+            max-width: 90%;
+        }
+        .modal-content input, .modal-content select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
+        .meal-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .meal-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .meal-btn.active {
+            background: #ff66b5;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h1>🧠 NS Body Scan</h1>
+            </div>
+            <div class="menu">
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/profile">👤 Профиль</a>
+                <a href="/analyze">🔍 Анализ</a>
+                <a href="/logout">🚪 Выйти</a>
+            </div>
+        </div>
+
+        <h2>🥗 Дневник питания</h2>
+        <p>Отслеживайте своё питание и контролируйте КБЖУ</p>
+
+        <div class="daily-summary">
+            <h3 style="color: white;">📊 Итого за сегодня</h3>
+            <div class="summary-grid">
+                <div>
+                    <div class="summary-value" id="totalCalories">0</div>
+                    <div>🔥 ккал</div>
+                </div>
+                <div>
+                    <div class="summary-value" id="totalProtein">0</div>
+                    <div>🥩 белки (г)</div>
+                </div>
+                <div>
+                    <div class="summary-value" id="totalFat">0</div>
+                    <div>🧈 жиры (г)</div>
+                </div>
+                <div>
+                    <div class="summary-value" id="totalCarbs">0</div>
+                    <div>🍚 углеводы (г)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Приёмы пищи -->
+        <div class="meal-section">
+            <div class="meal-header">
+                <h3>🍳 Завтрак</h3>
+                <button class="btn" onclick="openAddModal('breakfast')">+ Добавить</button>
+            </div>
+            <div id="breakfast-list"></div>
+        </div>
+
+        <div class="meal-section">
+            <div class="meal-header">
+                <h3>🍱 Обед</h3>
+                <button class="btn" onclick="openAddModal('lunch')">+ Добавить</button>
+            </div>
+            <div id="lunch-list"></div>
+        </div>
+
+        <div class="meal-section">
+            <div class="meal-header">
+                <h3>🍽️ Ужин</h3>
+                <button class="btn" onclick="openAddModal('dinner')">+ Добавить</button>
+            </div>
+            <div id="dinner-list"></div>
+        </div>
+
+        <div class="meal-section">
+            <div class="meal-header">
+                <h3>🍎 Перекус</h3>
+                <button class="btn" onclick="openAddModal('snack')">+ Добавить</button>
+            </div>
+            <div id="snack-list"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления продукта -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h3>➕ Добавить продукт</h3>
+            <input type="hidden" id="mealType">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="🔍 Поиск продуктов..." oninput="searchFood()">
+                <div id="searchResults" class="search-results"></div>
+            </div>
+            <input type="number" id="servingSize" placeholder="Вес порции (г)" value="100">
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="addFood()" class="btn">💾 Сохранить</button>
+                <button onclick="closeModal()" class="btn btn-secondary">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="add-food-btn" onclick="openAddModal('lunch')">+</button>
+
+    <script>
+        let selectedFood = null;
+        let currentMealType = 'lunch';
+        
+        function openAddModal(mealType) {
+            currentMealType = mealType;
+            document.getElementById('mealType').value = mealType;
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchResults').style.display = 'none';
+            selectedFood = null;
+            document.getElementById('addModal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('addModal').style.display = 'none';
+        }
+        
+        async function searchFood() {
+            const query = document.getElementById('searchInput').value;
+            if (query.length < 2) {
+                document.getElementById('searchResults').style.display = 'none';
+                return;
+            }
+            
+            const response = await fetch(`/search_food?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            
+            const resultsDiv = document.getElementById('searchResults');
+            if (data.results && data.results.length > 0) {
+                resultsDiv.innerHTML = data.results.map(food => `
+                    <div class="search-result-item" onclick="selectFood(${JSON.stringify(food).replace(/"/g, '&quot;')})">
+                        <strong>${food.name}</strong><br>
+                        <small>🔥 ${food.calories} ккал | 🥩 ${food.protein}г | 🧈 ${food.fat}г | 🍚 ${food.carbs}г</small>
+                    </div>
+                `).join('');
+                resultsDiv.style.display = 'block';
+            } else {
+                resultsDiv.innerHTML = '<div class="search-result-item">Ничего не найдено</div>';
+                resultsDiv.style.display = 'block';
+            }
+        }
+        
+        function selectFood(food) {
+            selectedFood = food;
+            document.getElementById('searchInput').value = food.name;
+            document.getElementById('searchResults').style.display = 'none';
+        }
+        
+        async function addFood() {
+            if (!selectedFood) {
+                alert('Выберите продукт из поиска');
+                return;
+            }
+            
+            const servingSize = document.getElementById('servingSize').value;
+            const mealType = document.getElementById('mealType').value;
+            
+            const formData = new FormData();
+            formData.append('food_name', selectedFood.name);
+            formData.append('serving_size', servingSize);
+            formData.append('calories', selectedFood.calories * servingSize / 100);
+            formData.append('protein', selectedFood.protein * servingSize / 100);
+            formData.append('fat', selectedFood.fat * servingSize / 100);
+            formData.append('carbs', selectedFood.carbs * servingSize / 100);
+            formData.append('meal_type', mealType);
+            
+            const response = await fetch('/add_food', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Ошибка при добавлении');
+            }
+        }
+        
+        async function deleteFood(logId) {
+            if (confirm('Удалить запись?')) {
+                window.location.href = `/delete_food/${logId}`;
+            }
+        }
+        
+        function loadFoodLogs() {
+            const logs = {{ logs|tojson }};
+            
+            const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+            let totalCalories = 0, totalProtein = 0, totalFat = 0, totalCarbs = 0;
+            
+            mealTypes.forEach(meal => {
+                const container = document.getElementById(`${meal}-list`);
+                const mealLogs = logs.filter(log => log.meal_type === meal);
+                
+                if (mealLogs.length === 0) {
+                    container.innerHTML = '<p style="color: #718096;">Нет записей</p>';
+                } else {
+                    container.innerHTML = mealLogs.map(log => `
+                        <div class="food-item">
+                            <div class="food-info">
+                                <div class="food-name">${log.food_name}</div>
+                                <div class="food-stats">
+                                    ${log.serving_size} г | 🔥 ${log.calories} ккал | 
+                                    🥩 ${log.protein} г | 🧈 ${log.fat} г | 🍚 ${log.carbs} г
+                                </div>
+                            </div>
+                            <button class="delete-btn" onclick="deleteFood(${log.id})">🗑️</button>
+                        </div>
+                    `).join('');
+                    
+                    mealLogs.forEach(log => {
+                        totalCalories += log.calories;
+                        totalProtein += log.protein;
+                        totalFat += log.fat;
+                        totalCarbs += log.carbs;
+                    });
+                }
+            });
+            
+            document.getElementById('totalCalories').innerText = Math.round(totalCalories);
+            document.getElementById('totalProtein').innerText = Math.round(totalProtein);
+            document.getElementById('totalFat').innerText = Math.round(totalFat);
+            document.getElementById('totalCarbs').innerText = Math.round(totalCarbs);
+        }
+        
+        loadFoodLogs();
+        
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('addModal')) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -18,6 +18,12 @@ from pose_comparator import pose_comparator
 from trainer_routes import trainer_dashboard, trainer_client, edit_client_program, edit_client_meal, leave_review
 from admin_routes import admin_dashboard, admin_users, export_admin_stats
 from database import get_user_by_id, get_trainer_clients
+from datetime import datetime, timedelta
+import calendar
+from food_api import food_api
+from datetime import datetime
+from database import add_food_log, get_food_logs, delete_food_log
+
 import cv2
 import os
 
@@ -444,7 +450,6 @@ def chat_client(trainer_id):
     
     return render_template('chat_client.html', user=user, trainer=trainer, messages=messages)
 
-# Отправка сообщения
 @app.route('/send_message', methods=['POST'])
 def send_message():
     if 'user_id' not in session:
@@ -453,6 +458,8 @@ def send_message():
     receiver_id = request.form.get('receiver_id', type=int)
     message = request.form.get('message', '')
     
+    print(f"DEBUG: sender={session['user_id']}, receiver={receiver_id}, message={message}")
+    
     if not message:
         return jsonify({'success': False, 'error': 'Empty message'}), 400
     
@@ -460,7 +467,6 @@ def send_message():
     send_msg(session['user_id'], receiver_id, message)
     
     return jsonify({'success': True})
-
 # Получение сообщений
 @app.route('/get_messages')
 def get_messages_route():
@@ -476,8 +482,7 @@ def get_messages_route():
     
     return jsonify({'messages': messages})
 
-from datetime import datetime, timedelta
-import calendar
+
 
 @app.route('/calendar')
 def calendar_page():
@@ -495,6 +500,7 @@ def calendar_page():
     workouts = get_calendar_workouts(session['user_id'], year, month)
     
     # Календарь
+    import calendar
     cal = calendar.monthcalendar(year, month)
     month_name = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
                   'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'][month-1]
@@ -505,8 +511,8 @@ def calendar_page():
                           year=year,
                           month=month,
                           month_name=month_name,
-                          workouts=workouts)
-
+                          workouts=workouts,
+                          now=now)
 @app.route('/add_workout', methods=['POST'])
 def add_workout():
     if 'user_id' not in session:
@@ -533,5 +539,88 @@ def toggle_workout(workout_id):
     
     return redirect(request.referrer or url_for('calendar_page'))
 
+@app.route('/nutrition')
+def nutrition_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = get_user_by_id(session['user_id'])
+    logs = get_food_logs(session['user_id'])
+    
+    return render_template('nutrition.html', user=user, logs=logs)
+
+@app.route('/search_food')
+def search_food():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    query = request.args.get('q', '')
+    if not query:
+        return jsonify({'results': []})
+    
+    results = food_api.search_food(query)
+    return jsonify({'results': results})
+
+@app.route('/add_food', methods=['POST'])
+def add_food():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    food_name = request.form.get('food_name')
+    serving_size = request.form.get('serving_size', 100, type=float)
+    calories = request.form.get('calories', 0, type=float)
+    protein = request.form.get('protein', 0, type=float)
+    fat = request.form.get('fat', 0, type=float)
+    carbs = request.form.get('carbs', 0, type=float)
+    meal_type = request.form.get('meal_type', 'lunch')
+    
+    add_food_log(session['user_id'], food_name, serving_size, calories, protein, fat, carbs, meal_type)
+    
+    flash('Продукт добавлен в дневник!', 'success')
+    return redirect(url_for('nutrition_page'))
+
+@app.route('/delete_food/<int:log_id>')
+def delete_food(log_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    delete_food_log(log_id, session['user_id'])
+    flash('Запись удалена!', 'success')
+    return redirect(url_for('nutrition_page'))
+@app.route('/test_food_api')
+def test_food_api():
+    from food_api import food_api
+    results = food_api.search_food('курица')
+    return jsonify(results)
+@app.route('/trainer/client_nutrition/<int:client_id>')
+def trainer_client_nutrition(client_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = get_user_by_id(session['user_id'])
+    
+    if user.get('role') != 'trainer':
+        flash('Доступ только для тренеров', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    client = get_user_by_id(client_id)
+    logs = get_food_logs(client_id)
+    
+    # Суммируем за сегодня
+    today_logs = [l for l in logs if l['created_at'].date() == datetime.now().date()]
+    total_calories = sum(l['calories'] for l in today_logs)
+    total_protein = sum(l['protein'] for l in today_logs)
+    total_fat = sum(l['fat'] for l in today_logs)
+    total_carbs = sum(l['carbs'] for l in today_logs)
+    
+    return render_template('trainer_client_nutrition.html', 
+                          user=user, 
+                          client=client, 
+                          logs=logs,
+                          total_calories=total_calories,
+                          total_protein=total_protein,
+                          total_fat=total_fat,
+                          total_carbs=total_carbs)
+app.add_url_rule('/trainer/client_nutrition/<int:client_id>', 'trainer_client_nutrition', trainer_client_nutrition)
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1021,3 +1021,57 @@ def toggle_workout_completed(workout_id):
     """, (workout_id,))
     conn.commit()
     conn.close()
+def add_food_log(user_id, food_name, serving_size, calories, protein, fat, carbs, meal_type):
+    """Добавить запись в дневник питания"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO food_logs (user_id, food_name, serving_size, calories, protein, fat, carbs, meal_type)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """, (user_id, food_name, serving_size, calories, protein, fat, carbs, meal_type))
+    conn.commit()
+    conn.close()
+
+def get_food_logs(user_id, date=None):
+    """Получить записи дневника питания за день"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    if date:
+        cur.execute("""
+            SELECT id, food_name, serving_size, calories, protein, fat, carbs, meal_type, created_at
+            FROM food_logs
+            WHERE user_id = %s AND logged_date = %s
+            ORDER BY created_at ASC
+        """, (user_id, date))
+    else:
+        cur.execute("""
+            SELECT id, food_name, serving_size, calories, protein, fat, carbs, meal_type, created_at
+            FROM food_logs
+            WHERE user_id = %s AND logged_date = CURRENT_DATE
+            ORDER BY created_at ASC
+        """, (user_id,))
+    rows = cur.fetchall()
+    conn.close()
+    
+    logs = []
+    for row in rows:
+        logs.append({
+            'id': row[0],
+            'food_name': row[1],
+            'serving_size': row[2],
+            'calories': row[3],
+            'protein': row[4],
+            'fat': row[5],
+            'carbs': row[6],
+            'meal_type': row[7],
+            'created_at': row[8]
+        })
+    return logs
+
+def delete_food_log(log_id, user_id):
+    """Удалить запись из дневника питания"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM food_logs WHERE id = %s AND user_id = %s", (log_id, user_id))
+    conn.commit()
+    conn.close()

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Дневник питания клиента - NS Body Scan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/modern.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h1>🧠 NS Body Scan</h1>
+            </div>
+            <div class="menu">
+                <a href="/trainer/dashboard">👨‍🏫 Мои клиенты</a>
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/logout">🚪 Выйти</a>
+            </div>
+        </div>
+
+        <h2>🥗 Дневник питания клиента</h2>
+        <p><strong>{{ client.name or client.username }}</strong></p>
+
+        <div class="daily-summary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 20px; margin-bottom: 20px;">
+            <h3 style="color: white;">📊 Итого за сегодня</h3>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; text-align: center;">
+                <div>
+                    <div style="font-size: 24px; font-weight: 700;">{{ total_calories|round(0) }}</div>
+                    <div>🔥 ккал</div>
+                </div>
+                <div>
+                    <div style="font-size: 24px; font-weight: 700;">{{ total_protein|round(0) }}</div>
+                    <div>🥩 белки (г)</div>
+                </div>
+                <div>
+                    <div style="font-size: 24px; font-weight: 700;">{{ total_fat|round(0) }}</div>
+                    <div>🧈 жиры (г)</div>
+                </div>
+                <div>
+                    <div style="font-size: 24px; font-weight: 700;">{{ total_carbs|round(0) }}</div>
+                    <div>🍚 углеводы (г)</div>
+                </div>
+            </div>
+        </div>
+
+        <h3>📋 История питания</h3>
+        {% if logs %}
+            {% for log in logs %}
+            <div class="card">
+                <div class="date">{{ log.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+                <p><strong>{{ log.food_name }}</strong></p>
+                <p>🍽️ {{ log.serving_size }} г | 🔥 {{ log.calories }} ккал | 🥩 {{ log.protein }} г | 🧈 {{ log.fat }} г | 🍚 {{ log.carbs }} г</p>
+                <p>🍴 Приём: 
+                    {% if log.meal_type == 'breakfast' %}Завтрак
+                    {% elif log.meal_type == 'lunch' %}Обед
+                    {% elif log.meal_type == 'dinner' %}Ужин
+                    {% else %}Перекус{% endif %}
+                </p>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>Нет записей о питании</p>
+        {% endif %}
+
+        <p><a href="/trainer/client/{{ client.id }}" class="btn btn-secondary">← Назад к клиенту</a></p>
+    </div>
+</body>
+</html>
