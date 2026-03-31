@@ -1,21 +1,32 @@
-﻿venv_own/
+﻿# Виртуальные окружения
+venv/
+venv_own/
+venv_yolo/
+venv311/
+env/
+
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Большие бинарные файлы
 *.dll
+*.exe
 *.so
 *.bin
-.env
-*.db
-*.sqlite
-.DS_Store
-# Временные и тестовые файлы
-add_*.py
-check_*.py
-test_*.py
+
+# Загрузки и отчёты
+uploads/
 static/reports/*.pdf
-uploads/*.jpg
-uploads/*.png
-*.pdf
-*.jpg
+static/reports/*.csv
+
+# Модели
+models/*.pkl
+models/*.h5
+
+# Docker
+.env
+postgres_data/
+redis_data/

@@ -1,0 +1,16 @@
+venv/
+venv_own/
+venv_yolo/
+venv311/
+env/
+__pycache__/
+*.pyc
+*.dll
+*.exe
+*.pkl
+*.h5
+*.pdf
+*.csv
+uploads/
+static/reports/
+models/
