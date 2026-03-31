@@ -1,61 +1,14 @@
 """
-Open Food Facts API - бесплатный поиск продуктов и КБЖУ
+Food API - демо-режим (без реального API)
 """
-
-import requests
-import json
 
 class FoodAPI:
     def __init__(self):
-        self.base_url = "https://world.openfoodfacts.org"
+        pass
     
     def search_food(self, query, limit=20):
-        """Поиск продуктов по названию (с демо-режимом)"""
-        try:
-            url = f"{self.base_url}/cgi/search.pl"
-            params = {
-                'search_terms': query,
-                'search_simple': '1',
-                'action': 'process',
-                'json': '1',
-                'page_size': limit,
-                'lang': 'ru'
-            }
-            
-            headers = {'User-Agent': 'NS Body Scan - Fitness App - 1.0'}
-            response = requests.get(url, params=params, headers=headers, timeout=5)
-            
-            if response.status_code == 200:
-                data = response.json()
-                products = []
-                
-                for product in data.get('products', []):
-                    nutriments = product.get('nutriments', {})
-                    calories = nutriments.get('energy-kcal_100g', 0) or nutriments.get('energy_100g', 0)
-                    
-                    products.append({
-                        'id': product.get('code'),
-                        'name': product.get('product_name', product.get('generic_name', 'Неизвестно')),
-                        'brand': product.get('brands', ''),
-                        'calories': round(calories or 0, 1),
-                        'protein': round(nutriments.get('proteins_100g', 0) or 0, 1),
-                        'fat': round(nutriments.get('fat_100g', 0) or 0, 1),
-                        'carbs': round(nutriments.get('carbohydrates_100g', 0) or 0, 1),
-                        'image': product.get('image_url', '')
-                    })
-                
-                if products:
-                    return products
-        
-        except Exception as e:
-            print(f"API error: {e}")
-        
-        # ДЕМО-РЕЖИМ: возвращаем тестовые продукты
-        print("Использую демо-режим")
-        return self._get_demo_products(query, limit)
-    
-    def _get_demo_products(self, query, limit):
-        """Демо-продукты для тестирования"""
+        """Поиск продуктов (демо-режим)"""
+        # Демо-продукты
         demo_products = {
             'курица': [
                 {'name': 'Куриная грудка отварная', 'calories': 165, 'protein': 31, 'fat': 3.6, 'carbs': 0},
@@ -86,8 +39,8 @@ class FoodAPI:
             ]
         }
         
-        results = []
         query_lower = query.lower()
+        results = []
         
         for key, products in demo_products.items():
             if key in query_lower or query_lower in key:
@@ -103,42 +56,22 @@ class FoodAPI:
                         'image': ''
                     })
         
-        # Если нет совпадений — возвращаем универсальные продукты
+        # Если нет совпадений
         if not results:
             results = [
                 {'id': 'demo_1', 'name': f'{query} (демо)', 'brand': 'Демо', 
                  'calories': 100, 'protein': 10, 'fat': 5, 'carbs': 10, 'image': ''}
             ]
         
+        print(f"🔍 Поиск: {query} -> найдено {len(results)} продуктов (демо)")
         return results[:limit]
     
+    def get_food_details(self, food_id):
+        """Получить детали продукта (демо)"""
+        return None
+    
     def get_product_by_barcode(self, barcode):
-        """Поиск по штрихкоду"""
-        try:
-            url = f"{self.base_url}/api/v0/product/{barcode}.json"
-            headers = {'User-Agent': 'NS Body Scan - Fitness App - 1.0'}
-            response = requests.get(url, headers=headers, timeout=10)
-            
-            if response.status_code == 200:
-                data = response.json()
-                
-                if data.get('status') == 1:
-                    product = data.get('product', {})
-                    nutriments = product.get('nutriments', {})
-                    
-                    return {
-                        'id': barcode,
-                        'name': product.get('product_name', product.get('generic_name', 'Неизвестно')),
-                        'brand': product.get('brands', ''),
-                        'calories': round(nutriments.get('energy-kcal_100g', 0) or 0, 1),
-                        'protein': round(nutriments.get('proteins_100g', 0) or 0, 1),
-                        'fat': round(nutriments.get('fat_100g', 0) or 0, 1),
-                        'carbs': round(nutriments.get('carbohydrates_100g', 0) or 0, 1),
-                        'image': product.get('image_url', '')
-                    }
-            return None
-        except Exception as e:
-            print(f"Ошибка поиска по штрихкоду: {e}")
-            return None
+        """Поиск по штрихкоду (демо)"""
+        return None
 
 food_api = FoodAPI()

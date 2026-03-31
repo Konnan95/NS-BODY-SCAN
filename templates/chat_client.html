@@ -59,6 +59,14 @@
         .input-area button {
             padding: 12px 24px;
         }
+        .video-call-btn {
+            background: #28a745;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        .video-call-btn:hover {
+            background: #218838;
+        }
     </style>
 </head>
 <body>
@@ -73,6 +81,15 @@
                 <a href="/analyze">🔍 Анализ</a>
                 <a href="/logout">🚪 Выйти</a>
             </div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <a href="https://meet.jit.si/NSBodyScan_{{ trainer.id }}_{{ user.id }}" 
+               target="_blank" 
+               class="btn video-call-btn" 
+               style="background: #28a745;">
+                🎥 Начать видеозвонок с тренером
+            </a>
         </div>
 
         <h2>💬 Чат с тренером</h2>
@@ -105,40 +122,38 @@
         scrollToBottom();
         
         function sendMessage() {
-    const message = messageInput.value.trim();
-    if (!message) return;
-    
-    // Добавляем сообщение на страницу
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message message-sent';
-    messageDiv.innerHTML = `
-        <div class="message-content">
-            ${escapeHtml(message)}
-            <div class="message-time">Только что</div>
-        </div>
-    `;
-    chatContainer.appendChild(messageDiv);
-    scrollToBottom();
-    
-    // Отправляем на сервер
-    fetch('/send_message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `receiver_id={{ trainer.id }}&message=${encodeURIComponent(message)}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (!data.success) {
-            alert('Ошибка отправки: ' + (data.error || 'Неизвестная ошибка'));
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message message-sent';
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    ${escapeHtml(message)}
+                    <div class="message-time">Только что</div>
+                </div>
+            `;
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+            
+            fetch('/send_message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `receiver_id={{ trainer.id }}&message=${encodeURIComponent(message)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    alert('Ошибка отправки: ' + (data.error || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                alert('Ошибка отправки сообщения');
+            });
+            
+            messageInput.value = '';
         }
-    })
-    .catch(error => {
-        console.error('Ошибка:', error);
-        alert('Ошибка отправки сообщения');
-    });
-    
-    messageInput.value = '';
-}
         
         function escapeHtml(text) {
             const div = document.createElement('div');
@@ -147,16 +162,15 @@
         }
         
         let lastMessageCount = {{ messages|length }};
-
-setInterval(() => {
-    fetch('/get_messages?with={{ trainer.id }}')
-    .then(response => response.json())
-    .then(data => {
-        if (data.messages && data.messages.length > lastMessageCount) {
-            location.reload();
-        }
-    });
-}, 3000);
+        setInterval(() => {
+            fetch('/get_messages?with={{ trainer.id }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.messages && data.messages.length > lastMessageCount) {
+                    location.reload();
+                }
+            });
+        }, 3000);
     </script>
 </body>
 </html>

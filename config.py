@@ -64,6 +64,14 @@ GIGACHAT_AUTH_KEY = os.environ.get('GIGACHAT_AUTH_KEY')
 EXERCISEDB_API_KEY = os.environ.get('EXERCISEDB_API_KEY')
 EXERCISEDB_HOST = os.environ.get('EXERCISEDB_HOST', 'exercisedb.p.rapidapi.com')
 
+# ========== НАСТРОЙКИ FATSECRET API ==========
+FATSECRET_CLIENT_ID = os.environ.get('FATSECRET_CLIENT_ID')
+FATSECRET_CLIENT_SECRET = os.environ.get('FATSECRET_CLIENT_SECRET')
+
+# ========== НАСТРОЙКИ GOOGLE FIT API ==========
+GOOGLE_FIT_CLIENT_ID = os.environ.get('GOOGLE_FIT_CLIENT_ID')
+GOOGLE_FIT_CLIENT_SECRET = os.environ.get('GOOGLE_FIT_CLIENT_SECRET')
+
 # ========== ПРОВЕРКА ОБЯЗАТЕЛЬНЫХ ПЕРЕМЕННЫХ ==========
 if not DB_CONFIG['password']:
     print("⚠️ ВНИМАНИЕ: DB_PASSWORD не задан в .env файле!")
@@ -76,3 +84,9 @@ if not GIGACHAT_AUTH_KEY:
 
 if not EXERCISEDB_API_KEY:
     print("⚠️ ВНИМАНИЕ: EXERCISEDB_API_KEY не задан в .env файле!")
+
+if not FATSECRET_CLIENT_ID:
+    print("⚠️ ВНИМАНИЕ: FATSECRET_CLIENT_ID не задан в .env файле!")
+
+if not FATSECRET_CLIENT_SECRET:
+    print("⚠️ ВНИМАНИЕ: FATSECRET_CLIENT_SECRET не задан в .env файле!")

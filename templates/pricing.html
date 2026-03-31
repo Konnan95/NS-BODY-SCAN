@@ -17,6 +17,11 @@
         .current { background: #28a745; cursor: default; }
         .flash { padding: 10px; margin: 10px 0; border-radius: 5px; }
         .success { background: #d4edda; color: #155724; }
+        .promo-section { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 20px; text-align: center; }
+        .promo-input { display: flex; gap: 10px; max-width: 400px; margin: 0 auto; }
+        .promo-input input { flex: 1; padding: 12px; border-radius: 40px; border: 1px solid #e2e8f0; font-size: 14px; }
+        .promo-message { margin-top: 10px; font-size: 12px; }
+        .discount-badge { display: inline-block; background: #ff66b5; color: white; padding: 2px 8px; border-radius: 20px; font-size: 11px; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -24,10 +29,11 @@
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
             <h1>🧠 NS Body Scan</h1>
             <div class="menu">
-                <a href="/dashboard">Главная</a>
-                <a href="/profile">Профиль</a>
-                <a href="/pricing">Тарифы</a>
-                <a href="/logout">Выйти</a>
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/profile">👤 Профиль</a>
+                <a href="/pricing">💰 Тарифы</a>
+                <a href="/trainers">👨‍🏫 Тренеры</a>
+                <a href="/logout">🚪 Выйти</a>
             </div>
         </div>
         
@@ -44,11 +50,12 @@
                 <h3>🌟 Бесплатный</h3>
                 <div class="price">0 ₽</div>
                 <ul class="features">
-                    <li>✅ Базовый анализ осанки</li>
-                    <li>✅ История анализов</li>
+                    <li>✅ Базовый анализ осанки (1/мес)</li>
+                    <li>✅ История анализов (5 последних)</li>
                     <li>✅ Шаги и сон</li>
                     <li>❌ AI-рекомендации</li>
                     <li>❌ Персональные планы</li>
+                    <li>❌ Библиотека упражнений</li>
                 </ul>
                 {% if user.subscription == 'free' %}
                     <span class="button current">Текущий тариф</span>
@@ -59,24 +66,25 @@
             
             <div class="plan">
                 <h3>🤖 AI-помощник</h3>
-                <div class="price">790 ₽/мес</div>
+                <div class="price" id="priceAiAssistant">790 ₽<span style="font-size: 14px;">/мес</span></div>
                 <ul class="features">
                     <li>✅ Всё из бесплатного</li>
                     <li>✅ AI-рекомендации по питанию</li>
                     <li>✅ Персональные тренировки</li>
                     <li>✅ Генерация планов (GigaChat)</li>
+                    <li>✅ Библиотека упражнений</li>
                     <li>❌ Живой тренер</li>
                 </ul>
                 {% if user.subscription == 'ai_assistant' %}
                     <span class="button current">Текущий тариф</span>
                 {% else %}
-                    <a href="/subscribe/ai_assistant" class="button">Выбрать</a>
+                    <a href="/subscribe/ai_assistant" class="button subscribe-btn" data-price="790">Выбрать</a>
                 {% endif %}
             </div>
             
             <div class="plan">
                 <h3>🏆 AI+тренер</h3>
-                <div class="price">1490 ₽/мес</div>
+                <div class="price" id="priceAiTrainer">1490 ₽<span style="font-size: 14px;">/мес</span></div>
                 <ul class="features">
                     <li>✅ Всё из AI-помощника</li>
                     <li>✅ Разборы с AI-тренером</li>
@@ -87,13 +95,13 @@
                 {% if user.subscription == 'ai_trainer' %}
                     <span class="button current">Текущий тариф</span>
                 {% else %}
-                    <a href="/subscribe/ai_trainer" class="button">Выбрать</a>
+                    <a href="/subscribe/ai_trainer" class="button subscribe-btn" data-price="1490">Выбрать</a>
                 {% endif %}
             </div>
             
             <div class="plan">
                 <h3>👨‍🏫 Живой тренер</h3>
-                <div class="price">2990 ₽/мес</div>
+                <div class="price" id="priceHumanTrainer">2990 ₽<span style="font-size: 14px;">/мес</span></div>
                 <ul class="features">
                     <li>✅ Всё из AI+тренера</li>
                     <li>✅ Личный тренер</li>
@@ -104,10 +112,89 @@
                 {% if user.subscription == 'human_trainer' %}
                     <span class="button current">Текущий тариф</span>
                 {% else %}
-                    <a href="/subscribe/human_trainer" class="button">Выбрать</a>
+                    <a href="/subscribe/human_trainer" class="button subscribe-btn" data-price="2990">Выбрать</a>
                 {% endif %}
             </div>
         </div>
+        
+        <!-- Промокоды -->
+        <div class="promo-section">
+            <h3>🎁 Есть промокод?</h3>
+            <div class="promo-input">
+                <input type="text" id="promocodeInput" placeholder="Введите промокод (например: WELCOME10)">
+                <button onclick="applyPromocode()" class="button">Применить</button>
+            </div>
+            <div id="promocodeMessage" class="promo-message"></div>
+        </div>
     </div>
+    
+    <script>
+        let currentDiscount = 0;
+        
+        function applyPromocode() {
+            const code = document.getElementById('promocodeInput').value.trim().toUpperCase();
+            if (!code) {
+                showMessage('Введите промокод', 'error');
+                return;
+            }
+            
+            fetch('/apply_promocode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentDiscount = data.discount;
+                    showMessage(`✅ Промокод применён! Скидка ${data.discount}%`, 'success');
+                    updatePrices(data.discount);
+                } else {
+                    showMessage(`❌ ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('❌ Ошибка при проверке промокода', 'error');
+            });
+        }
+        
+        function updatePrices(discount) {
+            const prices = {
+                'ai_assistant': 790,
+                'ai_trainer': 1490,
+                'human_trainer': 2990
+            };
+            
+            for (const [plan, originalPrice] of Object.entries(prices)) {
+                const discountedPrice = Math.round(originalPrice * (100 - discount) / 100);
+                const priceElement = document.getElementById(`price${plan === 'ai_assistant' ? 'AiAssistant' : plan === 'ai_trainer' ? 'AiTrainer' : 'HumanTrainer'}`);
+                if (priceElement) {
+                    priceElement.innerHTML = `${discountedPrice} ₽<span style="font-size: 14px;">/мес</span>`;
+                    const oldPriceSpan = document.createElement('span');
+                    oldPriceSpan.className = 'discount-badge';
+                    oldPriceSpan.innerHTML = `-${discount}% (было ${originalPrice}₽)`;
+                    priceElement.appendChild(oldPriceSpan);
+                }
+            }
+        }
+        
+        function showMessage(message, type) {
+            const msgDiv = document.getElementById('promocodeMessage');
+            msgDiv.innerHTML = `<span style="color: ${type === 'success' ? '#28a745' : '#dc3545'}">${message}</span>`;
+            setTimeout(() => {
+                msgDiv.innerHTML = '';
+            }, 5000);
+        }
+        
+        // Сохраняем скидку в localStorage для страницы подписки
+        const subscribeBtns = document.querySelectorAll('.subscribe-btn');
+        subscribeBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (currentDiscount > 0) {
+                    localStorage.setItem('promocode_discount', currentDiscount);
+                }
+            });
+        });
+    </script>
 </body>
 </html>

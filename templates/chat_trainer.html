@@ -59,6 +59,14 @@
         .input-area button {
             padding: 12px 24px;
         }
+        .video-call-btn {
+            background: #28a745;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        .video-call-btn:hover {
+            background: #218838;
+        }
     </style>
 </head>
 <body>
@@ -72,6 +80,15 @@
                 <a href="/dashboard">🏠 Главная</a>
                 <a href="/logout">🚪 Выйти</a>
             </div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <a href="https://meet.jit.si/NSBodyScan_{{ user.id }}_{{ client.id }}" 
+               target="_blank" 
+               class="btn video-call-btn" 
+               style="background: #28a745;">
+                🎥 Начать видеозвонок
+            </a>
         </div>
 
         <h2>💬 Чат с клиентом</h2>
@@ -107,7 +124,6 @@
             const message = messageInput.value.trim();
             if (!message) return;
             
-            // Добавляем сообщение на страницу
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message message-sent';
             messageDiv.innerHTML = `
@@ -119,7 +135,6 @@
             chatContainer.appendChild(messageDiv);
             scrollToBottom();
             
-            // Отправляем на сервер
             fetch('/send_message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -128,8 +143,12 @@
             .then(response => response.json())
             .then(data => {
                 if (!data.success) {
-                    alert('Ошибка отправки');
+                    alert('Ошибка отправки: ' + (data.error || 'Неизвестная ошибка'));
                 }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                alert('Ошибка отправки сообщения');
             });
             
             messageInput.value = '';
@@ -141,13 +160,12 @@
             return div.innerHTML;
         }
         
-        // Автообновление каждые 3 секунды
+        let lastMessageCount = {{ messages|length }};
         setInterval(() => {
             fetch('/get_messages?with={{ client.id }}')
             .then(response => response.json())
             .then(data => {
-                if (data.messages) {
-                    // Обновляем чат
+                if (data.messages && data.messages.length > lastMessageCount) {
                     location.reload();
                 }
             });

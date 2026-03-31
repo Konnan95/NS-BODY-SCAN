@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Тренеры - NS Body Scan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/modern.css">
+    <style>
+        .filters {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 20px;
+        }
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        .filter-group label {
+            display: block;
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 5px;
+        }
+        .filter-group select, .filter-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
+        .trainer-card {
+            display: flex;
+            gap: 20px;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: 0.2s;
+        }
+        .trainer-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .trainer-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+        }
+        .trainer-info {
+            flex: 1;
+        }
+        .trainer-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .trainer-specialization {
+            color: #ff66b5;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .trainer-rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .stars {
+            color: #fbbf24;
+        }
+        .trainer-price {
+            font-size: 20px;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .trainer-price span {
+            font-size: 12px;
+            font-weight: normal;
+            color: #718096;
+        }
+        .btn-select {
+            align-self: center;
+            background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 40px;
+            text-decoration: none;
+        }
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h1>🧠 NS Body Scan</h1>
+            </div>
+            <div class="menu">
+                <a href="/dashboard">🏠 Главная</a>
+                <a href="/profile">👤 Профиль</a>
+                <a href="/logout">🚪 Выйти</a>
+            </div>
+        </div>
+
+        <h2>👨‍🏫 Наши тренеры</h2>
+        <p>Выберите тренера, который поможет вам достичь целей</p>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label>Специализация</label>
+                <select id="specializationFilter">
+                    <option value="all">Все</option>
+                    <option value="силовые">🏋️ Силовые тренировки</option>
+                    <option value="кардио">🏃 Кардио</option>
+                    <option value="йога">🧘 Йога</option>
+                    <option value="пилатес">🧘 Пилатес</option>
+                    <option value="функциональный">⚡ Функциональный</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Цена до (₽/час)</label>
+                <input type="number" id="priceFilter" placeholder="Максимальная цена" value="5000">
+            </div>
+            <div class="filter-group">
+                <label>Рейтинг</label>
+                <select id="ratingFilter">
+                    <option value="0">Любой</option>
+                    <option value="4">4+ ⭐</option>
+                    <option value="4.5">4.5+ ⭐</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="trainersList">
+            {% for trainer in trainers %}
+            <div class="trainer-card" 
+                 data-specialization="{{ trainer.specialization|lower }}"
+                 data-price="{{ trainer.price_per_hour|default(1500) }}"
+                 data-rating="{{ trainer.avg_rating|default(0) }}">
+                <div class="trainer-avatar">
+                    {{ trainer.name[0] if trainer.name else '👤' }}
+                </div>
+                <div class="trainer-info">
+                    <div class="trainer-name">{{ trainer.name or trainer.username }}</div>
+                    <div class="trainer-specialization">
+                        {% if trainer.specialization %}
+                            🎯 {{ trainer.specialization }}
+                        {% else %}
+                            🎯 Общий фитнес
+                        {% endif %}
+                    </div>
+                    <div class="trainer-rating">
+                        <div class="stars">
+                            {% for i in range(5) %}
+                                {% if i < trainer.avg_rating|int %}
+                                    ★
+                                {% else %}
+                                    ☆
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span>({{ trainer.reviews_count|default(0) }} отзывов)</span>
+                    </div>
+                    <div class="trainer-price">{{ trainer.price_per_hour|default(1500) }} <span>₽/час</span></div>
+                    {% if trainer.about %}
+                    <p style="font-size: 13px; color: #718096; margin-top: 8px;">{{ trainer.about[:100] }}{% if trainer.about|length > 100 %}...{% endif %}</p>
+                    {% endif %}
+                </div>
+                <a href="/select_trainer/{{ trainer.id }}" class="btn-select">Выбрать</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div id="noResults" class="no-results" style="display: none;">
+            😕 Тренеры не найдены. Попробуйте изменить фильтры.
+        </div>
+    </div>
+
+    <script>
+        const trainersList = document.getElementById('trainersList');
+        const noResults = document.getElementById('noResults');
+        const specializationFilter = document.getElementById('specializationFilter');
+        const priceFilter = document.getElementById('priceFilter');
+        const ratingFilter = document.getElementById('ratingFilter');
+        
+        function filterTrainers() {
+            const specialization = specializationFilter.value;
+            const maxPrice = parseInt(priceFilter.value) || 5000;
+            const minRating = parseFloat(ratingFilter.value);
+            
+            const cards = document.querySelectorAll('.trainer-card');
+            let visibleCount = 0;
+            
+            cards.forEach(card => {
+                const cardSpecialization = card.dataset.specialization || '';
+                const cardPrice = parseInt(card.dataset.price) || 1500;
+                const cardRating = parseFloat(card.dataset.rating) || 0;
+                
+                let show = true;
+                
+                if (specialization !== 'all' && !cardSpecialization.includes(specialization)) {
+                    show = false;
+                }
+                if (cardPrice > maxPrice) {
+                    show = false;
+                }
+                if (minRating > 0 && cardRating < minRating) {
+                    show = false;
+                }
+                
+                if (show) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            if (visibleCount === 0) {
+                trainersList.style.display = 'none';
+                noResults.style.display = 'block';
+            } else {
+                trainersList.style.display = 'block';
+                noResults.style.display = 'none';
+            }
+        }
+        
+        specializationFilter.addEventListener('change', filterTrainers);
+        priceFilter.addEventListener('input', filterTrainers);
+        ratingFilter.addEventListener('change', filterTrainers);
+        
+        filterTrainers();
+    </script>
+</body>
+</html>

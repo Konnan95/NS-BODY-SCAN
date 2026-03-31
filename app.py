@@ -622,5 +622,59 @@ def trainer_client_nutrition(client_id):
                           total_fat=total_fat,
                           total_carbs=total_carbs)
 app.add_url_rule('/trainer/client_nutrition/<int:client_id>', 'trainer_client_nutrition', trainer_client_nutrition)
+@app.route('/test_fatsecret')
+def test_fatsecret():
+    from food_api import food_api
+    result = food_api.search_food('bread', limit=5)
+    return jsonify({'count': len(result), 'results': result, 'raw_response': 'check console'})
+@app.route('/trainers')
+def trainers_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import get_user_by_id, get_all_trainers
+    user = get_user_by_id(session['user_id'])
+    trainers = get_all_trainers()
+    
+    return render_template('trainers.html', user=user, trainers=trainers)
+@app.route('/select_trainer/<int:trainer_id>')
+def select_trainer(trainer_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import select_trainer
+    select_trainer(session['user_id'], trainer_id)
+    
+    flash('Тренер выбран! Теперь вы можете общаться с ним в чате.', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/apply_promocode', methods=['POST'])
+def apply_promocode():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.json
+    code = data.get('code', '').upper()
+    
+    from database import get_promocode, apply_promocode as use_promo
+    promo = get_promocode(code)
+    
+    if not promo:
+        return jsonify({'error': 'Промокод не найден'}), 404
+    
+    from datetime import datetime
+    if promo['valid_until'] and promo['valid_until'] < datetime.now().date():
+        return jsonify({'error': 'Промокод истек'}), 400
+    
+    if promo['used_count'] >= promo['max_uses']:
+        return jsonify({'error': 'Промокод уже использован максимальное количество раз'}), 400
+    
+    use_promo(promo['id'])
+    
+    return jsonify({
+        'success': True,
+        'discount': promo['discount_percent'],
+        'code': promo['code']
+    })
 if __name__ == '__main__':
     app.run(debug=True)

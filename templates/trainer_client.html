@@ -35,6 +35,18 @@
         }
         .trend-up { color: #48bb78; }
         .trend-down { color: #f56565; }
+        .video-call-btn {
+            background: #28a745;
+        }
+        .video-call-btn:hover {
+            background: #218838;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -44,9 +56,8 @@
                 <h1>🧠 NS Body Scan</h1>
             </div>
             <div class="menu">
-                <a href="/dashboard">🏠 Главная</a>
                 <a href="/trainer/dashboard">👨‍🏫 Мои клиенты</a>
-                <a href="/profile">👤 Профиль</a>
+                <a href="/dashboard">🏠 Главная</a>
                 <a href="/logout">🚪 Выйти</a>
             </div>
         </div>
@@ -98,15 +109,18 @@
         </div>
 
         <div class="card">
-    <h3>📝 Действия</h3>
-    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-        <a href="/trainer/client/{{ client.id }}/edit_program" class="btn">✏️ Редактировать программу</a>
-        <a href="/trainer/client/{{ client.id }}/edit_meal" class="btn">🥗 Редактировать план питания</a>
-        <a href="/trainer/client_nutrition/{{ client.id }}" class="btn">🥗 Дневник питания</a>
-        <a href="/chat_trainer/{{ client.id }}" class="btn">💬 Написать сообщение</a>
-        <a href="/trainer/client/{{ client.id }}/review/{{ user.id }}" class="btn">⭐ Оставить отзыв</a>
-    </div>
-
+            <h3>📝 Действия</h3>
+            <div class="action-buttons">
+                <a href="/trainer/client/{{ client.id }}/edit_program" class="btn">✏️ Редактировать программу</a>
+                <a href="/trainer/client/{{ client.id }}/edit_meal" class="btn">🥗 Редактировать план питания</a>
+                <a href="/trainer/client_nutrition/{{ client.id }}" class="btn">🥗 Дневник питания</a>
+                <a href="/chat_trainer/{{ client.id }}" class="btn">💬 Чат с клиентом</a>
+                <a href="https://meet.jit.si/NSBodyScan_{{ user.id }}_{{ client.id }}" 
+                   target="_blank" 
+                   class="btn video-call-btn" 
+                   style="background: #28a745;">🎥 Видеозвонок</a>
+                <a href="/trainer/client/{{ client.id }}/review/{{ user.id }}" class="btn">⭐ Оставить отзыв</a>
+            </div>
         </div>
     </div>
 </body>

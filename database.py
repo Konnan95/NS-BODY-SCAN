@@ -1075,3 +1075,121 @@ def delete_food_log(log_id, user_id):
     cur.execute("DELETE FROM food_logs WHERE id = %s AND user_id = %s", (log_id, user_id))
     conn.commit()
     conn.close()
+def get_all_trainers():
+    """Получить всех тренеров для маркетплейса"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, username, name, specialization, experience, about, price_per_hour
+        FROM users
+        WHERE role = 'trainer'
+        ORDER BY created_at DESC
+    """)
+    rows = cur.fetchall()
+    conn.close()
+    
+    trainers = []
+    for row in rows:
+        # Получаем средний рейтинг тренера
+        avg_rating = get_trainer_rating(row[0])
+        reviews_count = get_trainer_reviews_count(row[0])
+        
+        trainers.append({
+            'id': row[0],
+            'username': row[1],
+            'name': row[2],
+            'specialization': row[3],
+            'experience': row[4],
+            'about': row[5],
+            'price_per_hour': row[6],
+            'avg_rating': avg_rating,
+            'reviews_count': reviews_count
+        })
+    return trainers
+
+def get_trainer_rating(trainer_id):
+    """Получить средний рейтинг тренера"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT AVG(rating) FROM reviews WHERE trainer_id = %s", (trainer_id,))
+    avg = cur.fetchone()[0]
+    conn.close()
+    return round(avg, 1) if avg else 0
+
+def get_trainer_reviews_count(trainer_id):
+    """Получить количество отзывов тренера"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM reviews WHERE trainer_id = %s", (trainer_id,))
+    count = cur.fetchone()[0]
+    conn.close()
+    return count
+
+def select_trainer(client_id, trainer_id):
+    """Выбрать тренера (создать связь клиент-тренер)"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Деактивируем старую связь
+    cur.execute("""
+        UPDATE trainer_clients SET is_active = FALSE
+        WHERE client_id = %s
+    """, (client_id,))
+    # Создаём новую
+    cur.execute("""
+        INSERT INTO trainer_clients (trainer_id, client_id)
+        VALUES (%s, %s)
+    """, (trainer_id, client_id))
+    conn.commit()
+    conn.close()
+
+def get_promocode(code):
+    """Получить промокод по коду"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, code, discount_percent, valid_until, max_uses, used_count, is_active
+        FROM promocodes
+        WHERE code = %s AND is_active = TRUE
+    """, (code,))
+    row = cur.fetchone()
+    conn.close()
+    
+    if row:
+        return {
+            'id': row[0],
+            'code': row[1],
+            'discount_percent': row[2],
+            'valid_until': row[3],
+            'max_uses': row[4],
+            'used_count': row[5],
+            'is_active': row[6]
+        }
+    return None
+
+def apply_promocode(promocode_id):
+    """Применить промокод (увеличить счётчик использования)"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE promocodes 
+        SET used_count = used_count + 1
+        WHERE id = %s
+    """, (promocode_id,))
+    conn.commit()
+    conn.close()
+
+def add_promocode(code, discount_percent, valid_days=30, max_uses=100):
+    """Добавить новый промокод"""
+    from datetime import datetime, timedelta
+    conn = get_db_connection()
+    cur = conn.cursor()
+    valid_until = datetime.now() + timedelta(days=valid_days)
+    cur.execute("""
+        INSERT INTO promocodes (code, discount_percent, valid_until, max_uses)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (code) DO UPDATE SET
+            discount_percent = EXCLUDED.discount_percent,
+            valid_until = EXCLUDED.valid_until
+    """, (code, discount_percent, valid_until, max_uses))
+    conn.commit()
+    conn.close()
