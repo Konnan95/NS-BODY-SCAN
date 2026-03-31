@@ -21,6 +21,9 @@
         .hidden { display: none; }
         .note { font-size: 12px; color: #718096; text-align: center; margin-top: 15px; }
         hr { margin: 15px 0; border: none; border-top: 1px solid #e2e8f0; }
+        .checkbox-group { margin: 15px 0; display: flex; align-items: center; gap: 10px; }
+        .checkbox-group input { width: auto; margin: 0; }
+        .checkbox-group label { font-size: 12px; color: #718096; margin: 0; }
     </style>
 </head>
 <body>
@@ -105,6 +108,15 @@
                 <input type="text" name="price_per_hour" placeholder="Стоимость тренировки (₽/час)">
             </div>
             
+            <!-- Согласие с условиями -->
+            <div class="checkbox-group">
+                <input type="checkbox" name="agree_terms" id="agreeTerms" required>
+                <label for="agreeTerms">
+                    Я соглашаюсь с <a href="/terms" target="_blank">пользовательским соглашением</a> и 
+                    <a href="/privacy" target="_blank">политикой конфиденциальности</a>
+                </label>
+            </div>
+            
             <button type="submit">Зарегистрироваться</button>
         </form>
         <a href="/login">Уже есть аккаунт? Войти</a>
@@ -120,19 +132,12 @@
             if (roleSelect.value === 'trainer') {
                 clientFields.classList.add('hidden');
                 trainerFields.classList.remove('hidden');
-                // Делаем поля клиента необязательными
                 document.querySelectorAll('#clientFields input, #clientFields select, #clientFields textarea').forEach(field => {
                     field.required = false;
-                });
-                // Делаем поля тренера необязательными, но оставляем их в форме
-                document.querySelectorAll('#trainerFields input, #trainerFields textarea').forEach(field => {
-                    if (field.name === 'specialization') field.required = false;
-                    else field.required = false;
                 });
             } else {
                 clientFields.classList.remove('hidden');
                 trainerFields.classList.add('hidden');
-                // Делаем обязательные поля для клиента
                 const requiredClientFields = ['age', 'height', 'weight'];
                 document.querySelectorAll('#clientFields input, #clientFields select').forEach(field => {
                     if (requiredClientFields.includes(field.name)) {
@@ -145,7 +150,7 @@
         }
         
         roleSelect.addEventListener('change', toggleFields);
-        toggleFields(); // Инициализация
+        toggleFields();
     </script>
 </body>
 </html>

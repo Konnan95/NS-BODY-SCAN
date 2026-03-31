@@ -96,6 +96,18 @@ NSBodyScan_Own/
 git clone https://github.com/Konnan95/NS-BODY-SCAN.git
 cd NS-BODY-SCAN
 
+ ## 📸 Скриншоты
+
+| Страница | Превью |
+|----------|--------|
+| Дашборд клиента | ![Дашборд](docs/screenshots/dashboard.png) |
+| Анализ осанки | ![Анализ осанки](docs/screenshots/posture_analysis.png) |
+| Библиотека упражнений | ![Библиотека упражнений](docs/screenshots/exercises.png) |
+| Календарь тренировок | ![Календарь](docs/screenshots/calendar.png) |
+| Дневник питания | ![Дневник питания](docs/screenshots/nutrition.png) |
+| Кабинет тренера | ![Кабинет тренера](docs/screenshots/trainer.png) |
+| Админ-панель | ![Админка](docs/screenshots/admin.png) |
+
 🔐 Безопасность
 Пароли хешируются (Werkzeug)
 
