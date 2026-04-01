@@ -1,0 +1,121 @@
+{% extends "base_horizontal.html" %}
+
+{% block title %}Дашборд{% endblock %}
+
+{% block content %}
+<!-- Статистика -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <i class="fas fa-calendar-check fa-2x mb-2"></i>
+            <div class="stat-number">{{ workout_program.days_per_week if workout_program else '0' }}</div>
+            <div>Тренировок/нед</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+            <i class="fas fa-fire fa-2x mb-2"></i>
+            <div class="stat-number">{{ today_health.steps if today_health else '0' }}</div>
+            <div>Шагов сегодня</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">
+            <i class="fas fa-moon fa-2x mb-2"></i>
+            <div class="stat-number">{{ today_health.sleep_hours if today_health else '0' }}</div>
+            <div>Часов сна</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);">
+            <i class="fas fa-chart-line fa-2x mb-2"></i>
+            <div class="stat-number">{{ last_score if last_score else '0' }}/10</div>
+            <div>Оценка осанки</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>📊 Ваши параметры</h3>
+            </div>
+            <div class="card-body">
+                <p>📏 Рост: <strong>{{ user.height }} см</strong></p>
+                <p>⚖️ Вес: <strong>{{ user.weight }} кг</strong></p>
+                <p>🎯 Цель: <strong>{{ user.goal }}</strong></p>
+                <p>🏃 Активность: <strong>{{ user.activity }}</strong></p>
+                <div class="mt-2">
+                    <span class="badge bg-primary">{{ user.subscription }}</span>
+                </div>
+                <a href="/profile" class="btn btn-primary mt-3">✏️ Редактировать профиль</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>🏃‍♀️ Активность сегодня</h3>
+            </div>
+            <div class="card-body">
+                {% if today_health %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>👣 Шаги</span>
+                        <span class="fw-bold">{{ today_health.steps }}</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar" style="width: {{ (today_health.steps / 10000 * 100)|int }}%; background: linear-gradient(90deg, #ff66b5, #ff3388);"></div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>😴 Сон</span>
+                        <span class="fw-bold">{{ today_health.sleep_hours }} ч</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar" style="width: {{ (today_health.sleep_hours / 9 * 100)|int }}%; background: linear-gradient(90deg, #667eea, #764ba2);"></div>
+                    </div>
+                {% else %}
+                    <p>Нет данных за сегодня</p>
+                {% endif %}
+                <a href="/health" class="btn btn-primary mt-2">📝 Добавить данные</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if workout_program %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3>🏋️ Текущая программа тренировок</h3>
+            </div>
+            <div class="card-body">
+                <p><small>Версия {{ workout_program.version }} от {{ workout_program.created_at.strftime('%d.%m.%Y') if workout_program.created_at else 'недавно' }}</small></p>
+                <pre style="white-space: pre-wrap; background: #f8f9fa; padding: 15px; border-radius: 12px; max-height: 300px; overflow-y: auto;">{{ workout_program.program_data }}</pre>
+                <a href="/generate_workout" class="btn btn-primary mt-2">🔄 Сгенерировать новую программу</a>
+                <a href="/workout_history" class="btn btn-outline-secondary mt-2 ms-2">📜 История версий</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if meal_plan %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3>🥗 Текущий план питания</h3>
+            </div>
+            <div class="card-body">
+                <p><small>Версия {{ meal_plan.version }} от {{ meal_plan.created_at.strftime('%d.%m.%Y') if meal_plan.created_at else 'недавно' }}</small></p>
+                <pre style="white-space: pre-wrap; background: #f8f9fa; padding: 15px; border-radius: 12px; max-height: 300px; overflow-y: auto;">{{ meal_plan.plan_data }}</pre>
+                <a href="/generate_meal" class="btn btn-primary mt-2">🔄 Сгенерировать новый план</a>
+                <a href="/meal_history" class="btn btn-outline-secondary mt-2 ms-2">📜 История версий</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

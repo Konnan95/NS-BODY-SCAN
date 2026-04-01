@@ -1,0 +1,84 @@
+/* Кастомные цвета для AdminLTE */
+:root {
+    --primary: #ff66b5;
+    --primary-dark: #ff3388;
+    --secondary: #667eea;
+    --accent: #fbbf24;
+}
+
+/* Главная навигация */
+.main-header {
+    background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%) !important;
+}
+
+.main-header .navbar {
+    background: transparent !important;
+}
+
+.main-header .navbar a {
+    color: white !important;
+}
+
+/* Sidebar */
+.main-sidebar {
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%) !important;
+}
+
+.sidebar-dark-primary .nav-sidebar .nav-link.active {
+    background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%) !important;
+    color: white !important;
+}
+
+.sidebar-dark-primary .nav-sidebar .nav-link:hover {
+    background: rgba(255, 102, 181, 0.2) !important;
+}
+
+/* Карточки */
+.card-primary.card-outline {
+    border-top: 3px solid #ff66b5 !important;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+}
+
+.card-header h3 {
+    color: white !important;
+}
+
+/* Кнопки */
+.btn-primary {
+    background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%) !important;
+    border: none !important;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Статистические карточки */
+.small-box {
+    transition: transform 0.3s ease;
+}
+
+.small-box:hover {
+    transform: translateY(-5px);
+}
+
+.small-box.bg-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.small-box.bg-success {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
+}
+
+.small-box.bg-warning {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%) !important;
+}
+
+.small-box.bg-danger {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%) !important;
+}

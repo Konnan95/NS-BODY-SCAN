@@ -23,6 +23,9 @@ import calendar
 from food_api import food_api
 from datetime import datetime
 from database import add_food_log, get_food_logs, delete_food_log
+from database import get_user_by_id, get_today_health, get_active_workout_program, get_active_meal_plan
+from models import PostureAnalysis
+from database import SessionLocal
 
 import cv2
 import os
@@ -40,7 +43,7 @@ app.add_url_rule('/', 'home', lambda: dashboard_page() if 'user_id' in session e
 app.add_url_rule('/register', 'register', register_user, methods=['GET', 'POST'])
 app.add_url_rule('/login', 'login', login_user, methods=['GET', 'POST'])
 app.add_url_rule('/logout', 'logout', logout_user)
-app.add_url_rule('/dashboard', 'dashboard', dashboard_page)
+
 app.add_url_rule('/profile', 'profile', profile_page, methods=['GET', 'POST'])
 app.add_url_rule('/analyze', 'analyze', analyze_page, methods=['GET', 'POST'])
 app.add_url_rule('/history', 'history', history_page)
@@ -683,5 +686,44 @@ def privacy():
 @app.route('/terms')
 def terms():
     return render_template('terms.html')
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.route('/test_adminlte')
+def test_adminlte():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    from database import get_user_by_id, get_today_health
+    user = get_user_by_id(session['user_id'])
+    today_health = get_today_health(session['user_id'])
+    
+    return render_template('test_adminlte.html', user=user, today_health=today_health)
+@app.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = get_user_by_id(session['user_id'])
+    today_health = get_today_health(session['user_id'])
+    workout_program = get_active_workout_program(session['user_id'])
+    meal_plan = get_active_meal_plan(session['user_id'])
+    
+    # Получаем последний анализ осанки
+    db = SessionLocal()
+    last = db.query(PostureAnalysis).filter(
+        PostureAnalysis.user_id == session['user_id']
+    ).order_by(PostureAnalysis.created_at.desc()).first()
+    last_score = last.posture_score if last else None
+    db.close()
+    
+    return render_template('dashboard_new.html', 
+                          user=user,
+                          today_health=today_health,
+                          workout_program=workout_program,
+                          meal_plan=meal_plan,
+                          last_score=last_score)
+
 if __name__ == '__main__':
     app.run(debug=True)

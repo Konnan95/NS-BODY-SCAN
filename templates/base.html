@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NS Body Scan - {% block title %}Главная{% endblock %}</title>
+
+    <!-- Google Font: Source Sans Pro -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- AdminLTE CSS -->
+    <link rel="stylesheet" href="/static/adminlte/dist/css/adminlte.min.css">
+    {% block styles %}{% endblock %}
+    <!-- Custom styles -->
+<link rel="stylesheet" href="/static/css/adminlte_custom.css">
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+    <!-- Navbar -->
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+        <li class="nav-item">
+    <button onclick="toggleTheme()" class="btn btn-ghost btn-sm" style="background: transparent; border: none; color: #fff;">
+        <i class="fas fa-moon"></i>
+    </button>
+</li>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#">
+                    <i class="fas fa-user"></i> {{ user.name or user.username }}
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <a href="/profile" class="dropdown-item"><i class="fas fa-user"></i> Профиль</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="/logout" class="dropdown-item"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <a href="/dashboard" class="brand-link">
+            <span class="brand-text font-weight-light">🧠 NS Body Scan</span>
+        </a>
+
+        <div class="sidebar">
+            <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                <div class="info">
+                    <a href="/profile" class="d-block">{{ user.name or user.username }}</a>
+                </div>
+            </div>
+
+            <nav class="mt-2">
+                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                    <li class="nav-item">
+                        <a href="/dashboard" class="nav-link {% if active == 'dashboard' %}active{% endif %}">
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <p>Дашборд</p>
+                        </a>
+                    </li>
+                    {% if user.role != 'trainer' and user.role != 'admin' %}
+                    <li class="nav-item">
+                        <a href="/analyze" class="nav-link">
+                            <i class="nav-icon fas fa-camera"></i>
+                            <p>Анализ осанки</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/history" class="nav-link">
+                            <i class="nav-icon fas fa-history"></i>
+                            <p>История</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/health" class="nav-link">
+                            <i class="nav-icon fas fa-heartbeat"></i>
+                            <p>Шаги/Сон</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/chat" class="nav-link">
+                            <i class="nav-icon fas fa-robot"></i>
+                            <p>AI-чат</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/nutrition" class="nav-link">
+                            <i class="nav-icon fas fa-utensils"></i>
+                            <p>Дневник питания</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/calendar" class="nav-link">
+                            <i class="nav-icon fas fa-calendar"></i>
+                            <p>Календарь</p>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if user.role == 'trainer' %}
+                    <li class="nav-item">
+                        <a href="/trainer/dashboard" class="nav-link">
+                            <i class="nav-icon fas fa-users"></i>
+                            <p>Мои клиенты</p>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if user.role == 'admin' %}
+                    <li class="nav-item">
+                        <a href="/admin/dashboard" class="nav-link">
+                            <i class="nav-icon fas fa-chart-line"></i>
+                            <p>Админка</p>
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a href="/pricing" class="nav-link">
+                            <i class="nav-icon fas fa-tags"></i>
+                            <p>Тарифы</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/profile" class="nav-link">
+                            <i class="nav-icon fas fa-user"></i>
+                            <p>Профиль</p>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">{% block page_title %}{% endblock %}</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="content">
+            <div class="container-fluid">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible">
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </section>
+    </div>
+
+    <footer class="main-footer">
+        <strong>© 2026 NS Body Scan</strong>
+        <a href="/privacy" class="ml-2">Политика конфиденциальности</a> |
+        <a href="/terms" class="ml-2">Пользовательское соглашение</a>
+    </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
+<script src="/static/adminlte/dist/js/adminlte.min.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
+<script>
+function toggleTheme() {
+    document.body.classList.toggle('dark-theme');
+    localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+}
+
+if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark-theme');
+}
+</script>

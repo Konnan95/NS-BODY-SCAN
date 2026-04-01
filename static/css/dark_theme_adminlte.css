@@ -1,0 +1,34 @@
+/* Тёмная тема для AdminLTE */
+body.dark-theme {
+    background: #0f0f1a;
+}
+
+body.dark-theme .content-wrapper {
+    background: #1a1a2e;
+}
+
+body.dark-theme .card {
+    background: #2a2a3a;
+    border-color: #3a3a4a;
+}
+
+body.dark-theme .card-header {
+    background: linear-gradient(135deg, #ff66b5 0%, #ff3388 100%) !important;
+}
+
+body.dark-theme .card-body {
+    color: #e0e0e0;
+}
+
+body.dark-theme .table {
+    color: #e0e0e0;
+}
+
+body.dark-theme .table td {
+    border-color: #3a3a4a;
+}
+
+body.dark-theme .alert {
+    background: #2a2a3a;
+    color: #e0e0e0;
+}

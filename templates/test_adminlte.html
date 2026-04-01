@@ -1,0 +1,72 @@
+{% extends "base_horizontal.html" %}
+
+{% block title %}Дашборд{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <i class="fas fa-users fa-2x mb-2"></i>
+            <div class="stat-number">150</div>
+            <div>Пользователей</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+            <i class="fas fa-chart-line fa-2x mb-2"></i>
+            <div class="stat-number">53%</div>
+            <div>Активных</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">
+            <i class="fas fa-dumbbell fa-2x mb-2"></i>
+            <div class="stat-number">44</div>
+            <div>Тренировок</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);">
+            <i class="fas fa-fire fa-2x mb-2"></i>
+            <div class="stat-number">65</div>
+            <div>Дней подряд</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>📊 Ваши параметры</h3>
+            </div>
+            <div class="card-body">
+                <p>📏 Рост: <strong>{{ user.height }} см</strong></p>
+                <p>⚖️ Вес: <strong>{{ user.weight }} кг</strong></p>
+                <p>🎯 Цель: <strong>{{ user.goal }}</strong></p>
+                <p>🏃 Активность: <strong>{{ user.activity }}</strong></p>
+                <a href="/profile" class="btn btn-primary mt-2">✏️ Редактировать</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>🏃‍♀️ Активность сегодня</h3>
+            </div>
+            <div class="card-body">
+                {% if today_health %}
+                    <p>👣 Шаги: <strong>{{ today_health.steps }}</strong></p>
+                    <p>😴 Сон: <strong>{{ today_health.sleep_hours }} ч</strong></p>
+                    {% if today_health.weight %}
+                        <p>⚖️ Вес: <strong>{{ today_health.weight }} кг</strong></p>
+                    {% endif %}
+                {% else %}
+                    <p>Нет данных за сегодня</p>
+                {% endif %}
+                <a href="/health" class="btn btn-primary mt-2">📝 Обновить</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
